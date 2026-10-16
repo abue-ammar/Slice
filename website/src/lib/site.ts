@@ -6,8 +6,8 @@ export const site = {
 		"Slice is a native Mac app that records your screen, camera and microphone, then turns the take into a polished video. Free, no account, and it stays on your Mac.",
 	author: { name: "rit3zh", url: "https://x.com/rit3zh", handle: "@rit3zh" },
 	version: "0.1.0",
-	repo: "https://github.com/infinite-toby/screen-recorder",
-	download: "https://github.com/infinite-toby/screen-recorder/releases/latest",
+	repo: "https://github.com/rit3zh/slice",
+	download: "https://github.com/rit3zh/slice/releases/latest",
 	requirement: "macOS 15 or later",
 	donate: "https://buymeacoffee.com/rit3zh",
 };

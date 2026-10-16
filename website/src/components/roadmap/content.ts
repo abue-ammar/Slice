@@ -4,6 +4,16 @@ export const PLANNED = [
 	"Spotlight click effect that dims all but the click",
 ];
 
+export const NOTARIZED = {
+	done: 1,
+	items: [
+		"Release Slice for free on GitHub",
+		"Raise $99 for the Apple Developer Program",
+		"Sign Slice with an Apple Developer ID",
+		"Notarize it with Apple, so it opens without a security warning",
+	],
+};
+
 export const SHIPPED = [
 	"Record a display, a window or an area at up to 120 fps",
 	"Zooms that glide in, and the Liquid Glass lens",

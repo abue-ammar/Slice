@@ -12,10 +12,7 @@ const title = "Slice License — Source-Available Software";
 const description =
 	"Slice is source-available: use it, study the code, change it for yourself and contribute back. Commercial redistribution and resale need permission.";
 
-export const metadata: Metadata = {
-	...pageMetadata({ title, description, path: "/license", image: "/media/slice-demo.jpg" }),
-	robots: license.final ? undefined : { index: false, follow: false },
-};
+export const metadata: Metadata = pageMetadata({ title, description, path: "/license", image: "/media/slice-demo.jpg" });
 
 const TOC = [
 	...CLAUSES.map((clause, i) => ({ url: `#${clause.id}`, title: `${i + 1}. ${clause.title}`, depth: 2 })),
@@ -36,18 +33,31 @@ function Body({ block }: { block: Block }) {
 			</ul>
 		);
 	return (
-		<aside className={doc.note}>
-			<span className="mb-0.5 block font-medium text-fg">To decide</span>
-			{block.todo}
-		</aside>
+		<ul className="mt-2 mb-5 border-t border-line">
+			{block.components.map((c) => (
+				<li key={c.name} className="flex items-baseline justify-between gap-4 border-b border-line py-3">
+					<span className="flex min-w-0 flex-col gap-[2px]">
+						<a
+							href={c.url}
+							{...(c.url.startsWith("/") ? {} : { target: "_blank", rel: "noreferrer" })}
+							className="text-[15px] font-medium text-fg underline decoration-white/18 underline-offset-3 transition-colors duration-150 ease-out hover:decoration-fg"
+						>
+							{c.name}
+						</a>
+						<span className="text-[13.5px] leading-[1.5] text-muted">{c.use}</span>
+					</span>
+					<span className="flex-none text-right text-[13px] text-faint">{c.license}</span>
+				</li>
+			))}
+		</ul>
 	);
 }
 
 export default function LicensePage() {
 	const facts = [
 		license.type,
-		license.version ? `Version ${license.version}` : "Version not finalized",
-		license.updated ? `Updated ${license.updated}` : "Not yet dated",
+		`Version ${license.version}`,
+		`Updated ${license.updated}`,
 		license.copyright,
 	];
 
@@ -80,25 +90,6 @@ export default function LicensePage() {
 						</div>
 					</header>
 
-					{!license.final && (
-						<aside className="blur-in mt-8 flex gap-3 rounded-xl bg-surface px-4 py-3.5 text-[14px] leading-[1.6] text-muted" style={step(4)}>
-							<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="mt-[3px] flex-none text-[#fbbf24]">
-								<circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" strokeWidth="1.4" />
-								<path d="M8 4.75v3.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-								<circle cx="8" cy="10.9" r="0.85" fill="currentColor" />
-							</svg>
-							<div>
-								<p className="mb-0.5 font-medium text-fg">Draft</p>
-								<p>
-									This text hasn’t been legally reviewed and isn’t in force. Slice is currently released under the{" "}
-									<a href={`${license.repo}/blob/main/LICENSE`} target="_blank" rel="noreferrer" className={doc.link}>
-										Unlicense
-									</a>
-									, which places it in the public domain.
-								</p>
-							</div>
-						</aside>
-					)}
 
 					<div className="mt-4 text-[15px] leading-[1.75] text-body">
 						{CLAUSES.map((clause, i) => (
@@ -130,8 +121,11 @@ export default function LicensePage() {
 								<a href={`${license.repo}/pulls`} target="_blank" rel="noreferrer" className={doc.link}>
 									pull request
 								</a>{" "}
-								for changes. Contributions are covered by section 6. Written contribution guidelines haven’t been
-								published yet.
+								for changes. Contributions are covered by section 6, and{" "}
+								<a href={`${license.repo}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noreferrer" className={doc.link}>
+									CONTRIBUTING.md
+								</a>{" "}
+								explains how to build Slice and send a change.
 							</p>
 						</section>
 

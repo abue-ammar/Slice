@@ -3,11 +3,21 @@ import { site } from "@/lib/site";
 export const QUESTIONS: { q: string; a: React.ReactNode }[] = [
 	{
 		q: "Is Slice really free?",
-		a: "Yes. It’s released into the public domain, so you can use it for anything, including paid client work. There’s no account and no watermark.",
+		a: "Yes. It’s free to use for anything, including paid client work, and the source is on GitHub. There’s no account and no watermark. Selling or redistributing Slice itself needs permission (see the license).",
 	},
 	{
 		q: "Which Macs does it run on?",
 		a: "Any Mac running macOS 15 or later. Transcription and subtitles need macOS 26. Recording goes up to 120 fps on ProMotion displays.",
+	},
+	{
+		q: "macOS says it can’t verify Slice. Is it safe?",
+		a: (
+			<>
+				Slice isn’t notarized by Apple yet, so macOS warns you the first time. Open it once and click Done, then go to
+				System Settings › Privacy &amp; Security and click <b>Open Anyway</b> next to Slice. You only do this once.
+				The full source is on <a href={site.repo}>GitHub</a> if you’d like to check it or build it yourself.
+			</>
+		),
 	},
 	{
 		q: "Does anything get uploaded?",
@@ -22,7 +32,7 @@ export const QUESTIONS: { q: string; a: React.ReactNode }[] = [
 		a: (
 			<>
 				Yes. You need Xcode 26 and XcodeGen. Run <code>xcodegen generate</code>, then open the project. The{" "}
-				<a href={site.repo}>README</a> has the full steps, including signing with your own Developer ID.
+				<a href={site.repo}>README</a> has the full steps, including signing and building the DMG.
 			</>
 		),
 	},

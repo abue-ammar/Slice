@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import PageShell from "@/components/page-shell";
 import Checklist from "@/components/roadmap/checklist";
-import { PLANNED, SHIPPED } from "@/components/roadmap/content";
+import { NOTARIZED, PLANNED, SHIPPED } from "@/components/roadmap/content";
 import { pageMetadata } from "@/lib/metadata";
 import { site } from "@/lib/site";
 import { reveal, step } from "@/lib/reveal";
@@ -32,6 +32,25 @@ export default function RoadmapPage() {
 						Up next
 					</h2>
 					<Checklist items={PLANNED} />
+				</section>
+
+				<section {...reveal(0)} className="mt-14" aria-labelledby="notarized">
+					<h2 id="notarized" className={heading}>
+						Approved by Apple <span className="font-mono text-[12.5px] font-normal text-faint">$99 / year</span>
+					</h2>
+					<Checklist items={NOTARIZED.items} done={NOTARIZED.done} />
+					<p className="mt-4 text-[15px] leading-[1.6] text-pretty text-muted">
+						Slice isn’t notarized yet, so macOS asks you to click Open Anyway the first time. A paid Apple developer
+						account fixes that for everyone.{" "}
+						<a
+							href={site.donate}
+							target="_blank"
+							rel="noreferrer"
+							className="text-fg underline decoration-white/25 underline-offset-3 transition-[text-decoration-color] duration-200 ease-quart hover:decoration-fg"
+						>
+							Chip in
+						</a>
+					</p>
 				</section>
 
 				<section {...reveal(0)} className="mt-14" aria-labelledby="shipped">

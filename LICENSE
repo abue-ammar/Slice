@@ -1,24 +1,115 @@
-This is free and unencumbered software released into the public domain.
+Slice Source-Available License
+Version 1.0, October 16, 2026
+Copyright © 2026 rit3zh
 
-Anyone is free to copy, modify, publish, use, compile, sell, or
-distribute this software, either in source code form or as a compiled
-binary, for any purpose, commercial or non-commercial, and by any
-means.
 
-In jurisdictions that recognize copyright laws, the author or authors
-of this software dedicate any and all copyright interest in the
-software to the public domain. We make this dedication for the benefit
-of the public at large and to the detriment of our heirs and
-successors. We intend this dedication to be an overt act of
-relinquishment in perpetuity of all present and future rights to this
-software under copyright law.
+1. Purpose
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
+Slice is source-available software. Its source code is published so that people can use it, learn from it, change it for themselves, and help improve it. This license grants those freedoms while keeping the right to sell or commercially redistribute Slice with the Licensor.
 
-For more information, please refer to <https://unlicense.org/>
+Slice is not open source software as defined by the Open Source Initiative, because this license restricts commercial redistribution.
+
+
+2. Definitions
+
+- “Licensor” means rit3zh, the copyright holder of Slice.
+- “Software” means Slice, including its source code, compiled applications, documentation and other files published in the official repository.
+- “You” means the individual or entity exercising the rights granted by this license.
+- “Modified Version” means any work that contains the Software, or a substantial part of it, with changes.
+- “Distribute” means to make the Software or a Modified Version available to anyone else, by any means.
+- “Commercial” means intended for, or directed toward, payment, commercial advantage or monetary compensation, including through sales, subscriptions, advertising or bundling with a paid product or service.
+
+
+3. Personal and professional use
+
+You may download, install and run the Software, free of charge, on any device you own or control.
+
+This includes using the Software at work, inside a company or organization, and to make videos for paid work. The restrictions in sections 7 to 9 apply to distributing the Software itself, not to using it.
+
+Recordings, videos and other content you create with the Software belong to you. This license places no restrictions on how you use them.
+
+
+4. Inspecting and cloning the source
+
+You may view, download, clone and fork the source code from the official repository, build it yourself, and study how it works.
+
+
+5. Modifications
+
+You may modify the Software and run your Modified Version for your own use.
+
+You may share the source code of a Modified Version for free, for example as a public fork of the official repository, as long as you:
+
+- keep this license and the copyright notice with it;
+- clearly mark it as modified and unofficial, and say what you changed; and
+- do not charge for it or use it for a Commercial purpose.
+
+Distributing a Modified Version commercially is not permitted unless the Licensor has given you written permission under section 12.
+
+
+6. Contributions
+
+You may propose changes to the Software by opening issues and submitting pull requests to the official repository.
+
+By submitting a contribution, you confirm that you have the right to submit it, and you grant the Licensor a perpetual, worldwide, non-exclusive, royalty-free license to use, modify and distribute that contribution as part of the Software under this license or any later license the Licensor chooses.
+
+You keep the copyright in your contribution. Submitting a pull request does not transfer ownership of any code to you or to the Licensor beyond the contribution itself, and gives you no rights in other parts of the Software beyond those this license already grants.
+
+How to contribute is described in CONTRIBUTING.md in the official repository.
+
+
+7. No commercial redistribution
+
+You may not Distribute the Software, or a Modified Version, for a Commercial purpose. This includes publishing it in a paid app store listing, bundling it with a paid product or service, or offering it behind a paywall or subscription.
+
+
+8. No resale as a standalone application
+
+You may not sell, license, rent or otherwise charge for the Software or a Modified Version as a standalone application, whether as source code or as a compiled binary.
+
+
+9. No rebranding as a competing product
+
+You may not rename or rebrand the Software or a Modified Version and offer it to others as your own screen recording or video editing product, whether or not you charge for it.
+
+
+10. Ownership and attribution
+
+The Licensor keeps all copyright and other rights in the Software that this license does not expressly grant. This license does not grant any right to use the Slice name, icon or other marks, except to accurately say where the Software comes from.
+
+You must keep this license and the copyright notice with every copy of the Software and every Modified Version.
+
+
+11. Third-party components
+
+Some parts of the Software were made by others and are under their own licenses. This license does not apply to them; their own licenses do, and they take precedence for those files.
+
+- FluidAudio: Runs Parakeet transcription on the Neural Engine. Apache License 2.0. https://github.com/FluidInference/FluidAudio
+- SmoothGradient: Smooth gradient interpolation, by Ramon Torres. MIT License. https://github.com/raymondjavaxx/SmoothGradient
+- BorderBeamKit: The capture bar's animated border, a SwiftUI port of border-beam by Jakub Antalik. Credited to the original author. https://beam.jakubantalik.com
+- 3D iPhone models: The phones in the 3D editor, by the Sketchfab artists named in the credits. CC BY 4.0. https://github.com/rit3zh/slice/blob/main/Sources/SliceCore/Resources/Models/CREDITS.txt
+- Keyboard sound packs: Cherry MX Blue (Hai Nguyen) and Holy Panda (Thomas Lai) keystroke sounds. MIT License. https://github.com/rit3zh/slice/tree/main/Sources/SliceCore/Resources/Sounds/Keyboards
+- Apex Pro sound pack: Keystroke sounds. GNU GPL 3.0. https://github.com/rit3zh/slice/tree/main/Sources/SliceCore/Resources/Sounds/Keyboards/apex-pro
+- DeepFilterNet3: Voice enhancement. Downloaded on request, not bundled. MIT or Apache License 2.0. https://github.com/Rikorose/DeepFilterNet
+- Parakeet Ultra 0.6B: Transcription model. Downloaded on request, not bundled. CC BY 4.0. https://huggingface.co/FluidInference/parakeet-ultra-coreml
+
+Apple, iPhone, Mac and macOS are trademarks of Apple Inc. Slice is an independent project and is not affiliated with or endorsed by Apple.
+
+
+12. Commercial permission
+
+If you want to use the Software in a way this license does not allow, including commercial redistribution, ask the Licensor. Permission is only valid if it is given in writing, and only for what it expressly covers.
+
+To ask, open an issue on the official repository or message @rit3zh on X.
+
+
+13. No warranty
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE LICENSOR OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+14. Violations and termination
+
+If you break any term of this license, your rights under it end automatically. You must then stop using and distributing the Software and any Modified Version.
+
+If it is your first violation and you fix it within 30 days of being notified by the Licensor, your rights are reinstated.

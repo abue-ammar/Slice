@@ -25,7 +25,7 @@ export default function End({ compact = false }: { compact?: boolean }) {
 						Slice
 					</span>
 					<span className="text-[12.5px] text-faint">
-						v{site.version} · {license.final ? license.type : "Public domain"} · Made on a Mac
+						v{site.version} · {license.type} · Made on a Mac
 					</span>
 				</div>
 

@@ -183,16 +183,16 @@ function Item({ label, checked, reduceMotion }: { label: string; checked: boolea
 	);
 }
 
-export default function Checklist({ items, done = false }: { items: string[]; done?: boolean }) {
+export default function Checklist({ items, done = false }: { items: string[]; done?: boolean | number }) {
 	const reduceMotion = useReducedMotion();
 	const list = useRef<HTMLUListElement>(null);
 	const [ticked, setTicked] = useState(0);
-	const count = items.length;
-	const gaps = items.map((label) => 420 + label.length * 5).join();
+	const count = done === true ? items.length : done || 0;
+	const gaps = items.slice(0, count).map((label) => 420 + label.length * 5).join();
 
 	useEffect(() => {
 		const element = list.current;
-		if (!element || !done) return;
+		if (!element || !count) return;
 		const timers: ReturnType<typeof setTimeout>[] = [];
 		const observer = new IntersectionObserver(
 			([e]) => {
@@ -212,7 +212,7 @@ export default function Checklist({ items, done = false }: { items: string[]; do
 			observer.disconnect();
 			timers.forEach(clearTimeout);
 		};
-	}, [count, done, gaps, reduceMotion]);
+	}, [count, gaps, reduceMotion]);
 
 	return (
 		<ul ref={list}>
