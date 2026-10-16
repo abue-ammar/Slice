@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
 
 permissions:
@@ -16,6 +17,7 @@ concurrency:
 jobs:
   website:
     name: Website
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip ci') }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -27,17 +29,25 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: website/package-lock.json
-      - run: npm ci --no-audit --no-fund
-      - run: npx next typegen
-      - run: npx tsc --noEmit
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: |
+          npx next typegen
+          npx tsc --noEmit
+      - name: Build
+        run: npx next build
 
   scripts:
     name: Scripts
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip ci') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get install -y zsh
-      - run: |
+      - name: Install zsh
+        run: sudo apt-get install -y zsh
+      - name: Check syntax
+        run: |
           for f in scripts/*.sh; do
             if head -1 "$f" | grep -q zsh; then zsh -n "$f"; else bash -n "$f"; fi
             echo "ok $f"

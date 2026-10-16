@@ -86,6 +86,15 @@ SLICE_VOICE_E2E=1 SLICE_VOICE_MODEL_DIR=/tmp/slice-voice swift test --filter Voi
 SLICE_PARAKEET_E2E=1 SLICE_PARAKEET_MODEL_DIR=/tmp/slice-parakeet swift test --filter TranscriptionTests  # 632 MB
 ```
 
+### CI
+
+Every push to `main` and every pull request runs two GitHub Actions workflows:
+
+- **CI**: typechecks and builds the website, and syntax-checks the scripts.
+- **Checks**: makes sure `LICENSE` matches the website's license page, every Swift file has its header, and the JSON resources are valid.
+
+To skip them, put `[skip ci]` anywhere in the commit message, or add the `skip ci` label to a pull request. To run them on demand, use **Run workflow** in the Actions tab.
+
 ## Code style
 
 - Match the code around your change: its naming, idioms and comment density.

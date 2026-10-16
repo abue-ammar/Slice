@@ -11,10 +11,10 @@
 
 <p align="center">
   <a href="https://github.com/rit3zh/slice/releases/latest"><img src="https://img.shields.io/badge/Download-0A84FF?style=flat&logo=apple&logoColor=white" alt="Download"></a>
-  <img src="https://img.shields.io/badge/macOS-15%2B-2c2c2e?style=flat&labelColor=1c1c1e" alt="macOS 15 or later">
-  <img src="https://img.shields.io/badge/Swift-6-2c2c2e?style=flat&logo=swift&logoColor=white&labelColor=1c1c1e" alt="Swift 6">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Source--available-2c2c2e?style=flat&labelColor=1c1c1e" alt="Source-available license"></a>
-  <a href="https://buymeacoffee.com/rit3zh"><img src="https://img.shields.io/badge/Buy_me_a_coffee-2c2c2e?style=flat&logo=buymeacoffee&logoColor=white" alt="Buy me a coffee"></a>
+  <img src="https://img.shields.io/badge/macOS-15%2B-5E5CE6?style=flat&labelColor=1c1c1e" alt="macOS 15 or later">
+  <img src="https://img.shields.io/badge/Swift-6-FF9F0A?style=flat&logo=swift&logoColor=white&labelColor=1c1c1e" alt="Swift 6">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Source--available-30D158?style=flat&labelColor=1c1c1e" alt="Source-available license"></a>
+  <a href="https://buymeacoffee.com/rit3zh"><img src="https://img.shields.io/badge/Buy_me_a_coffee-FFD60A?style=flat&logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
 </p>
 
 <br>

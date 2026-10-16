@@ -1,0 +1,66 @@
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  license:
+    name: License in sync
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip ci') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Compare LICENSE with the website's license page
+        run: |
+          tmp=$(mktemp -d)
+          cp website/src/lib/site.ts "$tmp/site.ts"
+          sed 's#"@/lib/site"#"./site.ts"#' website/src/components/license/content.ts > "$tmp/content.ts"
+          printf 'import { licenseText } from "./content.ts";\nprocess.stdout.write(licenseText() + "\\n");\n' > "$tmp/print.ts"
+          node "$tmp/print.ts" | diff -u LICENSE - || {
+            echo "::error file=LICENSE::LICENSE differs from website/src/components/license/content.ts"
+            exit 1
+          }
+
+  headers:
+    name: File headers
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip ci') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every Swift file starts with the standard header
+        run: |
+          missing=0
+          while read -r f; do
+            if ! head -8 "$f" | grep -q "Created by"; then
+              echo "::error file=$f::Missing the standard file header"
+              missing=1
+            fi
+          done < <(git ls-files 'App/*.swift' 'Sources/*.swift' 'Tests/*.swift')
+          exit $missing
+
+  resources:
+    name: Resources
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip ci') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JSON resources are valid
+        run: |
+          git ls-files 'App/*.json' 'Sources/*.json' | while read -r f; do
+            jq empty "$f"
+            echo "ok $f"
+          done
