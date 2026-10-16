@@ -1,0 +1,152 @@
+{
+  "arrow" : {
+    "hotspotX" : 39,
+    "hotspotY" : 19,
+    "pixelsPerPoint" : 23.96875
+  },
+  "closedHand" : {
+    "hotspotX" : 195,
+    "hotspotY" : 163,
+    "pixelsPerPoint" : 23.96875
+  },
+  "contextualMenu" : {
+    "hotspotX" : 48,
+    "hotspotY" : 19,
+    "pixelsPerPoint" : 23.96875
+  },
+  "crosshair" : {
+    "hotspotX" : 239,
+    "hotspotY" : 238,
+    "pixelsPerPoint" : 23.96875
+  },
+  "dragCopy" : {
+    "hotspotX" : 29,
+    "hotspotY" : 0,
+    "pixelsPerPoint" : 23.96875
+  },
+  "iBeam" : {
+    "hotspotX" : 143,
+    "hotspotY" : 209,
+    "pixelsPerPoint" : 24
+  },
+  "iBeamVertical" : {
+    "hotspotX" : 233,
+    "hotspotY" : 117,
+    "pixelsPerPoint" : 23.96875
+  },
+  "openHand" : {
+    "hotspotX" : 208,
+    "hotspotY" : 190,
+    "pixelsPerPoint" : 23.96875
+  },
+  "operationNotAllowed" : {
+    "hotspotX" : 29,
+    "hotspotY" : 0,
+    "pixelsPerPoint" : 23.96875
+  },
+  "pointingHand" : {
+    "hotspotX" : 123,
+    "hotspotY" : 22,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeDown" : {
+    "hotspotX" : 220,
+    "hotspotY" : 143,
+    "pixelsPerPoint" : 24
+  },
+  "resizeEast" : {
+    "hotspotX" : 176,
+    "hotspotY" : 148,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeEastWest" : {
+    "hotspotX" : 213,
+    "hotspotY" : 148,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeLeft" : {
+    "hotspotX" : 164,
+    "hotspotY" : 192,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeLeftRight" : {
+    "hotspotX" : 243,
+    "hotspotY" : 192,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeNorth" : {
+    "hotspotX" : 163,
+    "hotspotY" : 160,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeNorthEast" : {
+    "hotspotX" : 153,
+    "hotspotY" : 135,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeNorthEastSouthWest" : {
+    "hotspotX" : 193,
+    "hotspotY" : 170,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeNorthSouth" : {
+    "hotspotX" : 177,
+    "hotspotY" : 192,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeNorthWest" : {
+    "hotspotX" : 160,
+    "hotspotY" : 138,
+    "pixelsPerPoint" : 24
+  },
+  "resizeNorthWestSouthEast" : {
+    "hotspotX" : 197,
+    "hotspotY" : 175,
+    "pixelsPerPoint" : 24
+  },
+  "resizeRight" : {
+    "hotspotX" : 155,
+    "hotspotY" : 192,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeSouth" : {
+    "hotspotX" : 170,
+    "hotspotY" : 160,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeSouthEast" : {
+    "hotspotX" : 160,
+    "hotspotY" : 135,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeSouthWest" : {
+    "hotspotX" : 165,
+    "hotspotY" : 135,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeUp" : {
+    "hotspotX" : 205,
+    "hotspotY" : 139,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeUpDown" : {
+    "hotspotX" : 210,
+    "hotspotY" : 213,
+    "pixelsPerPoint" : 23.96875
+  },
+  "resizeWest" : {
+    "hotspotX" : 183,
+    "hotspotY" : 148,
+    "pixelsPerPoint" : 23.96875
+  },
+  "zoomIn" : {
+    "hotspotX" : 177,
+    "hotspotY" : 155,
+    "pixelsPerPoint" : 24
+  },
+  "zoomOut" : {
+    "hotspotX" : 179,
+    "hotspotY" : 151,
+    "pixelsPerPoint" : 23.96875
+  }
+}

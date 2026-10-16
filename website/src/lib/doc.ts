@@ -1,0 +1,18 @@
+export const doc = {
+	eyebrow: "text-[13px] font-medium text-muted",
+	title: "mt-2.5 text-[clamp(30px,4.4vw,36px)] leading-[1.12] font-semibold tracking-[-0.035em] text-balance text-fg",
+	lede: "mt-3 max-w-[60ch] text-[16px] leading-[1.65] text-pretty text-muted",
+	link: "font-medium text-fg underline decoration-white/25 underline-offset-3 transition-[text-decoration-color] duration-150 ease-out hover:decoration-fg",
+	pill: "inline-flex h-8 cursor-pointer items-center gap-1.5 overflow-hidden rounded-full bg-surface pr-3.5 pl-3 text-[13px] whitespace-nowrap text-muted transition-colors duration-200 ease-out hover:bg-surface-strong hover:text-fg",
+	h2: "mt-12 mb-3 flex scroll-mt-28 gap-2 text-[20px] leading-[1.3] font-semibold tracking-[-0.025em] text-balance text-fg",
+	h3: "mt-8 mb-2 scroll-mt-28 text-[16px] leading-[1.3] font-semibold tracking-[-0.02em] text-fg",
+	p: "mb-3.5 text-pretty",
+	ul: "mb-3.5 list-disc pl-[1.2em]",
+	ol: "mb-3.5 list-decimal pl-[1.2em]",
+	li: "my-1.5 pl-0.5 marker:text-faint",
+	note: "my-4 rounded-xl bg-surface px-4 py-3 text-[14px] leading-[1.6] text-muted",
+	twoColumn: "mx-auto grid max-w-[1080px] grid-cols-[minmax(0,720px)_13rem] justify-between gap-16 px-(--gutter) pt-14 font-blog max-[1000px]:grid-cols-1 max-[1000px]:gap-0",
+	article: "min-w-0 max-[1000px]:contents",
+	header: "max-[1000px]:row-start-1",
+	aside: "min-w-0 max-[1000px]:sticky max-[1000px]:top-[84px] max-[1000px]:z-10 max-[1000px]:row-start-2 max-[1000px]:mt-7",
+};

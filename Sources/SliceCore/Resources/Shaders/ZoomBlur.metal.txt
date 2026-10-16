@@ -1,0 +1,37 @@
+//
+//  ZoomBlur.metal.txt
+//  SliceCore
+//
+//  Created by rit3zh CX on 10/7/26.
+//
+
+#include <CoreImage/CoreImage.h>
+using namespace metal;
+
+[[ stitchable ]] float4 zoomMotionBlur(coreimage::sampler source, float4 viewA, float4 viewB, float4 content,
+                                       float2 output, float2 sourceSize, float radius, float masked, float count,
+                                       coreimage::destination dest) {
+    float2 p = dest.coord();
+    float2 down = float2(p.x, output.y - p.y);
+    float2 halfSize = content.zw * 0.5;
+    float2 middle = content.xy + halfSize;
+    int n = max(int(count), 1);
+    float4 sum = float4(0.0);
+    for (int i = 0; i < n; i++) {
+        float f = n > 1 ? float(i) / float(n - 1) : 0.0;
+        float4 view = mix(viewA, viewB, f);
+        float k = output.x / view.z;
+        float2 canvas = down / k + view.xy;
+        float coverage = 1.0;
+        if (masked > 0.5) {
+            float2 q = abs(canvas - middle) - halfSize + radius;
+            float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
+            coverage = clamp(0.5 - d * k, 0.0, 1.0);
+            if (coverage <= 0.0) continue;
+        }
+        float2 u = (canvas - content.xy) / content.zw;
+        float2 s = float2(u.x, 1.0 - u.y) * sourceSize;
+        sum += source.sample(source.transform(s)) * coverage;
+    }
+    return sum / float(n);
+}

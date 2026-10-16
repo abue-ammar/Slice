@@ -1,0 +1,8 @@
+{
+  "categories": ["Lo-Fi", "Ambient", "Minimal", "Cinematic", "Upbeat", "Technology"],
+  "tracks": [
+    { "id": "lofi-beats", "title": "Lo-Fi Beats", "category": "Lo-Fi", "file": "lofi-beats.mp3" },
+    { "id": "zephira-lofi-beats", "title": "Zephira Lo-Fi", "category": "Lo-Fi", "file": "zephiramusic-lofi-beats-580208.mp3", "artist": "zephiramusic" },
+    { "id": "moonlit-shore", "title": "Moonlit Shore", "category": "Ambient", "file": "moonlit-shore.mp3" }
+  ]
+}

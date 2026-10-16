@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+@theme {
+	--color-bg: #000;
+	--color-card: #0a0a0b;
+	--color-raised: #161618;
+	--color-surface: #19191b;
+	--color-surface-strong: #242426;
+	--color-fg: #ededed;
+	--color-body: #bdbdc2;
+	--color-muted: #8f8f8f;
+	--color-faint: #5c5c60;
+	--color-line: rgb(255 255 255 / 0.07);
+	--color-line-strong: rgb(255 255 255 / 0.11);
+	--color-accent: #4d8dff;
+	--color-brand: #2b6cf3;
+
+	--container-site: 1120px;
+
+	--ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+	--ease-quart: cubic-bezier(0.23, 1, 0.32, 1);
+	--ease-glide: cubic-bezier(0.32, 0.72, 0, 1);
+	--ease-swap: cubic-bezier(0.65, 0, 0.35, 1);
+	--ease-press: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+	--animate-ripple: ripple 0.6s ease-out forwards;
+	--animate-enhance: enhance 7s var(--ease-glide) infinite;
+
+	@keyframes ripple {
+		from {
+			transform: translate(-50%, -50%) scale(0);
+			opacity: 0.6;
+		}
+		to {
+			transform: translate(-50%, -50%) scale(4);
+			opacity: 0;
+		}
+	}
+
+	@keyframes enhance {
+		0%,
+		38%,
+		100% {
+			--m: 0;
+		}
+		48%,
+		88% {
+			--m: 1;
+		}
+	}
+}
+
+@theme inline {
+	--font-sans: -apple-system, BlinkMacSystemFont, var(--font-geist-sans), "Segoe UI", sans-serif;
+	--font-blog: var(--font-geist-sans), -apple-system, sans-serif;
+	--font-mono: var(--font-geist-mono), ui-monospace, monospace;
+	--font-rounded: var(--font-sf-rounded), ui-rounded, "SF Pro Rounded", var(--font-geist-sans), sans-serif;
+}
+
+@property --m {
+	syntax: "<number>";
+	inherits: true;
+	initial-value: 0;
+}
+
+:root {
+	--gutter: clamp(20px, 4vw, 40px);
+}
+
+@layer base {
+	html {
+		color-scheme: dark;
+		background: var(--color-bg);
+		scroll-behavior: smooth;
+		scroll-padding-top: 120px;
+	}
+
+	body {
+		background: var(--color-bg);
+		color: var(--color-fg);
+		font-size: 16px;
+		line-height: 1.6;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	::selection {
+		background: rgb(77 141 255 / 0.35);
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 3px;
+		border-radius: 8px;
+	}
+}
+
+@keyframes blur-in {
+	from {
+		opacity: 0;
+		filter: blur(6px);
+		transform: translateY(0.25rem);
+	}
+	to {
+		opacity: 1;
+		filter: none;
+		transform: none;
+	}
+}
+
+@keyframes settle {
+	from {
+		transform: scale(0.92);
+	}
+	to {
+		transform: none;
+	}
+}
+
+@utility blur-in {
+	animation: blur-in 0.7s var(--ease-settle) both;
+	animation-delay: calc(var(--i, 0) * 80ms);
+}
+
+@utility scroll-settle {
+	@supports (animation-timeline: view()) {
+		@media (prefers-reduced-motion: no-preference) {
+			animation: settle linear both;
+			animation-timeline: view();
+			animation-range: entry 10% cover 45%;
+		}
+	}
+}
+
+[data-reveal][data-revealed] {
+	animation: blur-in 0.7s var(--ease-settle) both;
+	animation-delay: calc(var(--i, 0) * 80ms);
+}
+
+[data-reveal]:not([data-revealed]) {
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	@keyframes blur-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	.blur-in,
+	[data-reveal][data-revealed] {
+		animation-duration: 0.4s;
+		animation-delay: 120ms;
+	}
+}

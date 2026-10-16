@@ -1,0 +1,278 @@
+//
+//  Transitions.metal.txt
+//  SliceCore
+//
+//  Created by rit3zh CX on 10/10/26.
+//
+
+#include <CoreImage/CoreImage.h>
+using namespace metal;
+
+// Clip transitions. Each takes the outgoing and incoming pictures (`from`, `to`: what's on the background, transparent
+// around it, clamped to the frame), `progress` 0...1 (linear) and the frame `size` in pixels. Most are adapted from
+// gl-transitions / Shadertoy shaders, credited on each; sample counts are kept low so a Retina preview stays smooth.
+//
+// Kept as .txt and compiled at runtime by CIKernel.kernels(withMetalString:), like ClickRipple.
+
+static float hash21(float2 p) {
+    p = fract(p * float2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+static float sat(float x) { return clamp(x, 0.0, 1.0); }
+
+static float luma(float3 c) { return dot(c, float3(0.2126, 0.7152, 0.0722)); }
+
+static float4 at(coreimage::sampler s, float2 uv, float2 size) { return s.sample(s.transform(uv * size)); }
+
+static float4 blended(coreimage::sampler from, coreimage::sampler to, float2 uv, float2 size, float f) {
+    if (f <= 0.001) return at(from, uv, size);
+    if (f >= 0.999) return at(to, uv, size);
+    return mix(at(from, uv, size), at(to, uv, size), f);
+}
+
+// MARK: - Zoom Blur (after transitions.glsl.io b86b9016)
+
+[[ stitchable ]] float4 zoomBlurTransition(coreimage::sampler from, coreimage::sampler to, float progress, float2 size,
+                                           coreimage::destination dest) {
+    const int samples = 14;
+    float2 uv = dest.coord() / size;
+    float p = sat(progress);
+    float dissolve = p <= 0.0 ? 0.0 : p >= 1.0 ? 1.0
+        : p < 0.5 ? 0.5 * pow(2.0, 20.0 * p - 10.0) : 1.0 - 0.5 * pow(2.0, -20.0 * p + 10.0);
+    float strength = 0.15 * (1.0 - cos(2.0 * M_PI_F * p));
+    if (strength < 0.0005) return blended(from, to, uv, size, dissolve);
+    float2 toCentre = float2(0.5) - uv;
+    float offset = hash21(dest.coord()) * 0.5;
+    float4 colour = float4(0.0);
+    float total = 0.0;
+    for (int i = 0; i <= samples; i++) {
+        float percent = (float(i) + offset) / float(samples);
+        float weight = percent - percent * percent;
+        colour += blended(from, to, uv + toCentre * percent * strength, size, dissolve) * weight;
+        total += weight;
+    }
+    return colour / total;
+}
+
+// MARK: - Page Curl (after Eduardo Castineyra, casty/2015, CC BY 4.0)
+
+static float2 curl(float t, float maxt, float dist, float radius) {
+    if (t < dist - radius) return float2(t, 1.0);
+    if (t > dist + radius) return float2(-1.0);
+    float a = asin((t - dist) / radius);
+    float ca = M_PI_F - a;
+    float2 back = float2(dist + ca * radius, cos(ca));
+    if (back.x < maxt) return back;
+    if (t < dist) return float2(t, 1.0);
+    float2 front = float2(dist + a * radius, cos(a));
+    return front.x < maxt ? front : float2(-1.0);
+}
+
+[[ stitchable ]] float4 pageCurlTransition(coreimage::sampler from, coreimage::sampler to, float progress, float2 size,
+                                           coreimage::destination dest) {
+    const float radius = 0.1;
+    float2 uv = dest.coord() / size.x;
+    float2 ur = float2(1.0, size.y / size.x);
+    float2 dir = normalize(ur);
+    float dist = length(ur) * (1.0 - sat(progress)) * (1.0 + 4.0 * radius) - 2.0 * radius;
+    float d = dot(uv, dir);
+    float2 end = abs((ur - uv) / dir);
+    float maxt = d + min(end.x, end.y);
+    float2 cf = curl(d, maxt, dist, radius);
+    float4 under = to.sample(to.transform(dest.coord()));
+    if (cf.x <= 0.0) {
+        under.rgb *= smoothstep(0.0, radius * 2.0, d - dist);
+        return under;
+    }
+    float4 page = from.sample(from.transform((uv + dir * (cf.x - d)) * size.x));
+    if (cf.y > 0.0) {
+        float shadow = (1.0 - smoothstep(0.0, radius * 2.0, dist - d))
+            * smoothstep(-radius, radius, maxt - (cf.x + 1.5 * M_PI_F * radius + radius));
+        page.rgb *= cf.y * (1.0 - shadow);
+    } else {
+        page.rgb = (page.rgb * 0.25 + 0.75 * page.a) * -cf.y;
+    }
+    return page + under * (1.0 - page.a);
+}
+
+// MARK: - Revolve (after bread, gl-transitions, MIT)
+
+static float easeStep(float x) {
+    x = sat(x);
+    return x * x * (3.0 - 2.0 * x);
+}
+
+static float revolveEnvelope(float t) { return easeStep((t - 0.10) / 0.33) * (1.0 - easeStep((t - 0.43) / 0.29)); }
+
+static float2 rotate2(float2 p, float a) {
+    float s = sin(a), c = cos(a);
+    return float2(c * p.x - s * p.y, s * p.x + c * p.y);
+}
+
+static float2 revolveWarp(float2 uv, float t, float ratio) {
+    const float2 centre = float2(0.46, 0.52);
+    const float direction = -1.0, maxRotation = 1.95, peakZoom = 2.22, swirl = 2.85, barrel = 0.38;
+    float e = revolveEnvelope(t);
+    float2 p = uv - centre;
+    p.x *= ratio;
+    float spin = direction * (maxRotation * e + swirl * e * pow(1.0 - sat(length(p) / 0.96), 1.55));
+    p = rotate2(p, -spin);
+    p /= 1.0 + (peakZoom - 1.0) * pow(e, 0.85);
+    float rr = length(p);
+    p *= 1.0 + barrel * e * rr * rr * 2.8;
+    p.x /= ratio;
+    return clamp(p + centre, float2(0.001), float2(0.999));
+}
+
+[[ stitchable ]] float4 revolveTransition(coreimage::sampler from, coreimage::sampler to, float progress, float2 size,
+                                          coreimage::destination dest) {
+    float2 uv = dest.coord() / size;
+    if (progress <= 0.0) return at(from, uv, size);
+    if (progress >= 1.0) return at(to, uv, size);
+    float ratio = size.x / size.y;
+    float e = revolveEnvelope(progress);
+    float span = 0.06 * e;
+    float4 colour;
+    if (span < 0.0005) {
+        colour = blended(from, to, revolveWarp(uv, progress, ratio), size, smoothstep(0.3, 0.5, progress));
+    } else {
+        colour = float4(0.0);
+        float total = 0.0;
+        for (int i = -4; i <= 4; i++) {
+            float x = float(i) / 4.0;
+            float w = (1.0 - abs(x)) * (1.0 - abs(x)) + 0.01;
+            float t = sat(progress + x * span);
+            colour += blended(from, to, revolveWarp(uv, t, ratio), size, smoothstep(0.3, 0.5, t)) * w;
+            total += w;
+        }
+        colour /= total;
+    }
+    float2 q = uv - 0.5;
+    q.x *= ratio;
+    colour.rgb *= 1.0 - 0.16 * e * smoothstep(0.35, 0.95, length(q));
+    return colour;
+}
+
+// MARK: - Burn (after Anastasia Dunbar, gl-transitions, MIT)
+
+static float sigmoid(float x, float a) {
+    return x > 0.5 ? 1.0 - pow(2.0 - x * 2.0, a) / 2.0 : pow(x * 2.0, a) / 2.0;
+}
+
+static float burnRand(float co) { return fract(sin(co * 24.9898 + 2.31) * 43758.5453); }
+
+static float burnRandom(float2 co, float shift) {
+    co += 10.0;
+    float a = fract(sin(dot(co, float2(12.9898 + floor(shift) * 0.5, 78.233 + 2.31))) * 43758.5453);
+    float b = fract(sin(dot(co, float2(12.9898 + floor(shift + 1.0) * 0.5, 78.233 + 2.31))) * 43758.5453);
+    return mix(a, b, sigmoid(fract(shift), 2.0));
+}
+
+static float smoothRandom(float2 co, float shift) {
+    float2 f = fract(co);
+    float bottom = mix(burnRandom(floor(co), shift), burnRandom(floor(co + float2(1.0, 0.0)), shift), sigmoid(f.x, 2.0));
+    float top = mix(burnRandom(floor(co + float2(0.0, 1.0)), shift), burnRandom(floor(co + float2(1.0, 1.0)), shift),
+                    sigmoid(f.x, 2.0));
+    return mix(bottom, top, sigmoid(f.y, 2.0));
+}
+
+[[ stitchable ]] float4 burnLight(float progress, float2 size, coreimage::destination dest) {
+    float2 p = dest.coord() / size;
+    float f = 0.0;
+    for (int k = 0; k < 13; k++) {
+        float i = float(k);
+        f += sin(p.x * burnRand(i) * 6.0 + progress * 8.0 + burnRand(i + 1.43))
+            * sin(p.y * burnRand(i + 4.4) * 6.0 + progress * 6.0 + burnRand(i + 2.4));
+        float2 spot = float2(smoothRandom(float2(progress * 1.3), i + 1.0), smoothRandom(float2(progress * 0.5), i + 6.25));
+        f += 1.0 - sat(length(p - spot) * mix(20.0, 70.0, burnRand(i)));
+    }
+    f = (f + 4.0) / 11.0;
+    float3 light = pow(abs(f * float3(1.0, 0.7, 0.6)), float3(1.0, 2.0 - sin(progress * M_PI_F), 1.3));
+    return float4(light * sin(progress * M_PI_F), 0.0);
+}
+
+[[ stitchable ]] float4 burnTransition(coreimage::sampler from, coreimage::sampler to, float progress, float2 size,
+                                       coreimage::destination dest) {
+    const int repeats = 20;
+    float2 p = dest.coord() / size;
+    float pulse = sin(sat(progress) * M_PI_F);
+    p = (p - 0.5) * (1.0 + smoothRandom(float2(progress * 5.0), 6.3) * pulse * 0.05) + 0.5;
+    float amount = pulse * 0.03;
+    float f = sigmoid(sat(progress), 10.0);
+    if (amount < 0.0002) return blended(from, to, p, size, f);
+    float4 colour = float4(0.0);
+    for (int k = 0; k < repeats; k++) {
+        float i = float(k);
+        float angle = i / float(repeats) * 360.0 * 57.29578;
+        float reach = fract(sin(dot(float2(i, p.x + p.y), float2(12.9898, 78.233))) * 43758.5453) + amount;
+        colour += blended(from, to, p + float2(cos(angle), sin(angle)) * reach * amount, size, f);
+    }
+    return colour / float(repeats);
+}
+
+// MARK: - Wave Scramble (after mandubian, gl-transitions, MIT)
+
+static float waveDisplacement(float2 p, float progress) {
+    float2 o = p * sin(progress) - float2(0.5);
+    float theta = acos(clamp(o.x, -1.0, 1.0)) * 30.0;
+    float s = sin((2.0 * theta - M_PI_F) / 24.0);
+    float s2 = s * s;
+    return (exp(cos(theta)) - 2.0 * cos(4.0 * theta) + s2 * s2 * s) / 10.0;
+}
+
+[[ stitchable ]] float4 waveScrambleTransition(coreimage::sampler from, coreimage::sampler to, float progress, float2 size,
+                                               coreimage::destination dest) {
+    const float separation = 0.3;
+    float2 uv = dest.coord() / size;
+    if (progress <= 0.0) return at(from, uv, size);
+    if (progress >= 1.0) return at(to, uv, size);
+    float inv = 1.0 - progress;
+    float disp = waveDisplacement(uv, progress);
+    float4 incoming = at(to, uv + inv * disp, size);
+    float4 middle = at(from, uv + progress * disp, size);
+    float4 outgoing = float4(at(from, uv + progress * disp * (1.0 - separation), size).r, middle.g,
+                             at(from, uv + progress * disp * (1.0 + separation), size).b, middle.a);
+    return incoming * progress + outgoing * inv;
+}
+
+// MARK: - Thanos Snap (after amoldalwai/Thanos-Snap-Effect)
+
+[[ stitchable ]] float4 snapTransition(coreimage::sampler from, coreimage::sampler to, float progress, float2 size,
+                                       coreimage::destination dest) {
+    const float layers = 24.0, spread = 0.5, life = 0.5;
+    float2 p = dest.coord();
+    float grain = max(size.x / 640.0, 1.0);
+    int first = max(int(ceil((progress - life) / spread * layers)), 0);
+    int last = min(int(floor(progress / spread * layers)), int(layers) - 1);
+    float found = -1.0;
+    float2 source = p;
+    for (int i = first; i <= last; i++) {
+        float fi = float(i);
+        float local = sat((progress - fi / layers * spread) / life);
+        if (local <= 0.0 || local >= 1.0) continue;
+        float2 heading = normalize(float2(1.0, 0.45) + (float2(hash21(float2(fi, 3.1)), hash21(float2(fi, 7.7))) - 0.5)
+                                   * float2(0.7, 1.1));
+        float2 side = float2(-heading.y, heading.x);
+        float2 drift = (heading * 0.26 * local * local + side * sin(local * 5.0 + fi) * 0.012 * local) * size.x;
+        float2 q = p - drift;
+        if (q.x < 0.0 || q.y < 0.0 || q.x > size.x || q.y > size.y) continue;
+        if (int(floor(layers * (hash21(floor(q / grain)) + 2.0 * (1.0 - q.x / size.x)) / 3.0)) == i) {
+            found = local;
+            source = q;
+            break;
+        }
+    }
+    if (found < 0.0) {
+        int sheet = int(floor(layers * (hash21(floor(p / grain)) + 2.0 * (1.0 - p.x / size.x)) / 3.0));
+        if (progress < float(sheet) / layers * spread) found = 0.0;
+    }
+    float4 behind = to.sample(to.transform(p));
+    if (found < 0.0) return behind;
+    float4 c = from.sample(from.transform(source));
+    float3 ash = (luma(c.rgb) * 0.5 + 0.1 * c.a) * float3(1.0, 0.94, 0.86);
+    c.rgb = mix(c.rgb, ash, smoothstep(0.0, 0.45, found));
+    c *= 1.0 - smoothstep(0.3, 1.0, found);
+    return c + behind * (1.0 - c.a);
+}

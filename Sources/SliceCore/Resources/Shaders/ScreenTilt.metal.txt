@@ -1,0 +1,37 @@
+//
+//  ScreenTilt.metal.txt
+//  SliceCore
+//
+//  Created by rit3zh CX on 10/2/26.
+//
+
+#include <CoreImage/CoreImage.h>
+using namespace metal;
+
+static float2 tiltSource(float3 r0, float3 r1, float3 r2, float2 p, thread bool &visible) {
+    float3 d = float3(p, 1.0);
+    float3 q = float3(dot(r0, d), dot(r1, d), dot(r2, d));
+    visible = q.z > 1e-6;
+    return q.xy / max(q.z, 1e-6);
+}
+
+[[ stitchable ]] float4 screenTilt(coreimage::sampler layer, float3 r0, float3 r1, float3 r2,
+                                   coreimage::destination dest) {
+    float2 p = dest.coord();
+    bool visible, vx, vy;
+    float2 c = tiltSource(r0, r1, r2, p, visible);
+    if (!visible) return float4(0.0);
+    float2 ex = tiltSource(r0, r1, r2, p + float2(1.0, 0.0), vx) - c;
+    float2 ey = tiltSource(r0, r1, r2, p + float2(0.0, 1.0), vy) - c;
+    float footprint = max(length(ex), length(ey));
+    float spread = 0.25 * clamp((footprint - 1.0) * 3.0, 0.0, 1.0);
+    if (spread <= 0.0) return layer.sample(layer.transform(c));
+    float4 sum = float4(0.0);
+    for (int j = 0; j < 2; j++) {
+        for (int i = 0; i < 2; i++) {
+            float2 o = (float2(i, j) * 2.0 - 1.0) * spread;
+            sum += layer.sample(layer.transform(c + ex * o.x + ey * o.y));
+        }
+    }
+    return sum * 0.25;
+}

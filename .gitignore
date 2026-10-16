@@ -1,0 +1,10 @@
+.DS_Store
+.build/
+build/
+dist/
+*.xcodeproj/
+xcuserdata/
+DerivedData/
+.swiftpm/
+Config/Signing.local.xcconfig
+scripts/release.local.env

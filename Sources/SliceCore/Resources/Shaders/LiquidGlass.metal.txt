@@ -1,0 +1,70 @@
+//
+//  LiquidGlass.metal.txt
+//  SliceCore
+//
+//  Created by rit3zh CX on 10/2/26.
+//
+
+#include <CoreImage/CoreImage.h>
+using namespace metal;
+
+// Liquid-glass magnifier, after OverShifted/LiquidGlass (inspo/LiquidGlass): a superellipse lens whose thick edge
+// bends what's behind it towards the centre, with a little dispersion, frost and a rim of light.
+// Positions and radii are in output pixels (Core Image space, y up). `clean` is already magnified about the lens's
+// focus, so the kernel only refracts it.
+//
+// Kept as .txt and compiled at runtime by CIKernel.kernels(withMetalString:), like ClickRipple.
+
+static float lensDistance(float2 rel, float2 radii, float corner, float squircle, float n) {
+    float2 q = abs(rel) - radii + corner;
+    float box = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - corner;
+    if (squircle <= 0.0) return box;
+    float2 a = abs(rel / radii) + 1e-5;
+    float value = pow(a.x, n) + pow(a.y, n) - 1.0;
+    float gradient = n * sqrt(pow(a.x, 2.0 * n - 2.0) + pow(a.y, 2.0 * n - 2.0)) + 1e-5;
+    return mix(box, value / gradient * min(radii.x, radii.y), squircle);
+}
+
+[[ stitchable ]] float4 liquidGlass(coreimage::sampler base, coreimage::sampler clean, coreimage::sampler frosted,
+                                    float2 center, float2 radii, float corner, float squircle, float exponent,
+                                    float unit, float strength, float refraction, float thickness, float frost,
+                                    float rim, float dispersion, float opacity, coreimage::destination dest) {
+    float2 position = dest.coord();
+    float4 under = base.sample(base.transform(position));
+    float2 rel = position - center;
+    float d = lensDistance(rel, radii, corner, squircle, exponent);
+    float coverage = 1.0 - smoothstep(-1.2, 1.2, d);
+    if (coverage <= 0.0) return under;
+
+    refraction *= strength; frost *= strength; rim *= strength; dispersion *= strength;
+    float depth = max(-d, 0.0) / unit;
+    float band = 0.04 + 0.30 * thickness;
+    float edge = exp(-depth / band);
+    float bend = 1.0 - refraction * 0.55 * edge;
+    float2 offset = rel * bend;
+    float spread = dispersion * 0.035 * edge;
+    float r = clean.sample(clean.transform(center + offset * (1.0 + spread))).r;
+    float4 g = clean.sample(clean.transform(center + offset));
+    float b = clean.sample(clean.transform(center + offset * (1.0 - spread))).b;
+    float3 glass = float3(r, g.g, b);
+    float frostMix = clamp(frost * (0.35 + 0.65 * edge), 0.0, 1.0);
+    glass = mix(glass, frosted.sample(frosted.transform(center + offset)).rgb, frostMix);
+
+    float2 dir = length(rel) > 0.001 ? normalize(rel / radii) : float2(0.0, 1.0);
+    float lit = max(dot(dir, normalize(float2(-0.55, 0.85))), 0.0);
+    float bounce = max(dot(dir, normalize(float2(0.55, -0.85))), 0.0);
+    float rimBand = exp(-depth / 0.03);
+    glass += rim * rimBand * (0.55 * pow(lit, 1.5) + 0.25 * pow(bounce, 2.0) + 0.08);
+    float sheen = smoothstep(0.1, 1.0, rel.y / radii.y) * exp(-depth / 0.4);
+    glass += rim * 0.07 * sheen;
+    glass *= 1.0 - 0.12 * refraction * edge * (1.0 - rimBand);
+
+    float a = coverage * clamp(opacity, 0.0, 1.0);
+    return float4(mix(under.rgb, clamp(glass, 0.0, 1.0) * under.a, a), under.a);
+}
+
+[[ stitchable ]] float4 liquidGlassMask(float2 center, float2 radii, float corner, float squircle, float exponent,
+                                        coreimage::destination dest) {
+    float d = lensDistance(dest.coord() - center, radii, corner, squircle, exponent);
+    return float4(0.0, 0.0, 0.0, 1.0 - smoothstep(-1.2, 1.2, d));
+}

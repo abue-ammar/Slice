@@ -1,0 +1,152 @@
+{
+  "arrow" : {
+    "hotspotX" : 33,
+    "hotspotY" : 20,
+    "pixelsPerPoint" : 10
+  },
+  "closedHand" : {
+    "hotspotX" : 27,
+    "hotspotY" : 16,
+    "pixelsPerPoint" : 2
+  },
+  "contextualMenu" : {
+    "hotspotX" : 10,
+    "hotspotY" : 10,
+    "pixelsPerPoint" : 2
+  },
+  "crosshair" : {
+    "hotspotX" : 26,
+    "hotspotY" : 26,
+    "pixelsPerPoint" : 2
+  },
+  "dragCopy" : {
+    "hotspotX" : 10,
+    "hotspotY" : 10,
+    "pixelsPerPoint" : 2
+  },
+  "iBeam" : {
+    "hotspotX" : 61,
+    "hotspotY" : 108,
+    "pixelsPerPoint" : 10
+  },
+  "iBeamVertical" : {
+    "hotspotX" : 22,
+    "hotspotY" : 17,
+    "pixelsPerPoint" : 2
+  },
+  "openHand" : {
+    "hotspotX" : 26,
+    "hotspotY" : 25,
+    "pixelsPerPoint" : 2
+  },
+  "operationNotAllowed" : {
+    "hotspotX" : 10,
+    "hotspotY" : 10,
+    "pixelsPerPoint" : 2
+  },
+  "pointingHand" : {
+    "hotspotX" : 19,
+    "hotspotY" : 8,
+    "pixelsPerPoint" : 2
+  },
+  "resizeDown" : {
+    "hotspotX" : 22,
+    "hotspotY" : 14,
+    "pixelsPerPoint" : 2
+  },
+  "resizeEast" : {
+    "hotspotX" : 24,
+    "hotspotY" : 14,
+    "pixelsPerPoint" : 2
+  },
+  "resizeEastWest" : {
+    "hotspotX" : 24,
+    "hotspotY" : 15,
+    "pixelsPerPoint" : 2
+  },
+  "resizeLeft" : {
+    "hotspotX" : 24,
+    "hotspotY" : 20,
+    "pixelsPerPoint" : 2
+  },
+  "resizeLeftRight" : {
+    "hotspotX" : 30,
+    "hotspotY" : 20,
+    "pixelsPerPoint" : 2
+  },
+  "resizeNorth" : {
+    "hotspotX" : 18,
+    "hotspotY" : 28,
+    "pixelsPerPoint" : 2
+  },
+  "resizeNorthEast" : {
+    "hotspotX" : 22,
+    "hotspotY" : 22,
+    "pixelsPerPoint" : 2
+  },
+  "resizeNorthEastSouthWest" : {
+    "hotspotX" : 22,
+    "hotspotY" : 22,
+    "pixelsPerPoint" : 2
+  },
+  "resizeNorthSouth" : {
+    "hotspotX" : 18,
+    "hotspotY" : 28,
+    "pixelsPerPoint" : 2
+  },
+  "resizeNorthWest" : {
+    "hotspotX" : 22,
+    "hotspotY" : 22,
+    "pixelsPerPoint" : 2
+  },
+  "resizeNorthWestSouthEast" : {
+    "hotspotX" : 22,
+    "hotspotY" : 22,
+    "pixelsPerPoint" : 2
+  },
+  "resizeRight" : {
+    "hotspotX" : 16,
+    "hotspotY" : 20,
+    "pixelsPerPoint" : 2
+  },
+  "resizeSouth" : {
+    "hotspotX" : 18,
+    "hotspotY" : 28,
+    "pixelsPerPoint" : 2
+  },
+  "resizeSouthEast" : {
+    "hotspotX" : 22,
+    "hotspotY" : 22,
+    "pixelsPerPoint" : 2
+  },
+  "resizeSouthWest" : {
+    "hotspotX" : 22,
+    "hotspotY" : 22,
+    "pixelsPerPoint" : 2
+  },
+  "resizeUp" : {
+    "hotspotX" : 24,
+    "hotspotY" : 26,
+    "pixelsPerPoint" : 2
+  },
+  "resizeUpDown" : {
+    "hotspotX" : 22,
+    "hotspotY" : 28,
+    "pixelsPerPoint" : 2
+  },
+  "resizeWest" : {
+    "hotspotX" : 24,
+    "hotspotY" : 15,
+    "pixelsPerPoint" : 2
+  },
+  "zoomIn" : {
+    "hotspotX" : 23,
+    "hotspotY" : 20,
+    "pixelsPerPoint" : 2
+  },
+  "zoomOut" : {
+    "hotspotX" : 23,
+    "hotspotY" : 20,
+    "pixelsPerPoint" : 2
+  }
+}

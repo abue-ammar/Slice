@@ -1,0 +1,32 @@
+All models are licensed under CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/).
+
+iPhone 17 Pro Max.usdz
+"iPhone 17 Pro Max" by MajdyModels (https://sketchfab.com/MG990)
+https://sketchfab.com/3d-models/iphone-17-pro-max-87fc1df741384124a8ce0226d2b2058d
+
+iPhone Air.usdz
+"iPhone Air" by Ranguel (https://sketchfab.com/Ranguel)
+https://sketchfab.com/3d-models/iphone-air-055022b853aa4c6cb25cc6979178e719
+
+iPhone 16 Pro Max.usdz
+"iPhone 16 Pro Max" by MajdyModels (https://sketchfab.com/MG990)
+https://sketchfab.com/3d-models/iphone-16-pro-max-41a071ae12794b668502f58d1e0fd1a3
+
+iPhone 16 Plus.usdz
+"Iphone 16 Plus" by WhatIsLove (https://sketchfab.com/vladgutu11), as credited in the file
+https://sketchfab.com/3d-models/iphone-16-plus-c1719ed762a7412d933f3ddef0ce2929
+
+iPhone 15 Pro Max.usdz
+"IPhone 15 Pro Max Made In Blender" by PolygonMBW (https://sketchfab.com/PolygonMBW)
+https://sketchfab.com/3d-models/iphone-15-pro-max-made-in-blender-616945ef6bef415889c8748918700bc7
+
+iPhone 14 Pro Max.usdz
+"iPhone 14 Pro Max" by akshatmittal (https://sketchfab.com/akshatmittal)
+https://sketchfab.com/3d-models/iphone-14-pro-max-95f11f5a06604c8b9fd44046ae52a9cc
+
+preview-model.jpg
+The wallpaper shown on the phone's display in Slice's model and pose pickers.
+
+Changes, to every model: Slice turns it to face the camera, re-maps the display's texture coordinates, hides any stage
+modelled around the phone, recolours the body for other finishes and draws the recording on the display at run time;
+the files themselves are unmodified.

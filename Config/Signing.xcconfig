@@ -1,0 +1,9 @@
+// Code signing. The defaults sign ad-hoc so anyone can build and run the app on their own Mac.
+// To sign with your own Apple Developer ID, copy Signing.local.xcconfig.example to
+// Signing.local.xcconfig (ignored by git) and fill in your details.
+BUNDLE_ID_PREFIX = com.example
+DEVELOPMENT_TEAM = NYF9WZVVQ9
+CODE_SIGN_IDENTITY = Apple Development
+
+
+#include? "Signing.local.xcconfig"

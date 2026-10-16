@@ -1,0 +1,152 @@
+{
+  "arrow" : {
+    "hotspotX" : 54,
+    "hotspotY" : 36,
+    "pixelsPerPoint" : 32.01303001475579
+  },
+  "closedHand" : {
+    "hotspotX" : 230,
+    "hotspotY" : 200,
+    "pixelsPerPoint" : 31.992766287453108
+  },
+  "contextualMenu" : {
+    "hotspotX" : 74,
+    "hotspotY" : 48,
+    "pixelsPerPoint" : 31.37185475646026
+  },
+  "crosshair" : {
+    "hotspotX" : 239,
+    "hotspotY" : 238,
+    "pixelsPerPoint" : 23.96875
+  },
+  "dragCopy" : {
+    "hotspotX" : 29,
+    "hotspotY" : 0,
+    "pixelsPerPoint" : 23.96875
+  },
+  "iBeam" : {
+    "hotspotX" : 144,
+    "hotspotY" : 277,
+    "pixelsPerPoint" : 31.993290992288266
+  },
+  "iBeamVertical" : {
+    "hotspotX" : 322,
+    "hotspotY" : 136,
+    "pixelsPerPoint" : 31.972671731797842
+  },
+  "openHand" : {
+    "hotspotX" : 281,
+    "hotspotY" : 323,
+    "pixelsPerPoint" : 31.991232365295478
+  },
+  "operationNotAllowed" : {
+    "hotspotX" : 29,
+    "hotspotY" : 0,
+    "pixelsPerPoint" : 23.96875
+  },
+  "pointingHand" : {
+    "hotspotX" : 188,
+    "hotspotY" : 58,
+    "pixelsPerPoint" : 31.996247938799236
+  },
+  "resizeDown" : {
+    "hotspotX" : 238,
+    "hotspotY" : 166,
+    "pixelsPerPoint" : 31.97485674928853
+  },
+  "resizeEast" : {
+    "hotspotX" : 487,
+    "hotspotY" : 206,
+    "pixelsPerPoint" : 31.897992248701662
+  },
+  "resizeEastWest" : {
+    "hotspotX" : 343,
+    "hotspotY" : 145,
+    "pixelsPerPoint" : 32.0122042875242
+  },
+  "resizeLeft" : {
+    "hotspotX" : 277,
+    "hotspotY" : 212,
+    "pixelsPerPoint" : 31.988822006945718
+  },
+  "resizeLeftRight" : {
+    "hotspotX" : 309,
+    "hotspotY" : 180,
+    "pixelsPerPoint" : 26.512616655316478
+  },
+  "resizeNorth" : {
+    "hotspotX" : 214,
+    "hotspotY" : 466,
+    "pixelsPerPoint" : 31.93814866357909
+  },
+  "resizeNorthEast" : {
+    "hotspotX" : 304,
+    "hotspotY" : 279,
+    "pixelsPerPoint" : 32.04694435522781
+  },
+  "resizeNorthEastSouthWest" : {
+    "hotspotX" : 241,
+    "hotspotY" : 221,
+    "pixelsPerPoint" : 31.971713381390106
+  },
+  "resizeNorthSouth" : {
+    "hotspotX" : 151,
+    "hotspotY" : 328,
+    "pixelsPerPoint" : 31.97042600293734
+  },
+  "resizeNorthWest" : {
+    "hotspotX" : 311,
+    "hotspotY" : 287,
+    "pixelsPerPoint" : 31.96551724137931
+  },
+  "resizeNorthWestSouthEast" : {
+    "hotspotX" : 252,
+    "hotspotY" : 227,
+    "pixelsPerPoint" : 32.03919168645752
+  },
+  "resizeRight" : {
+    "hotspotX" : 169,
+    "hotspotY" : 207,
+    "pixelsPerPoint" : 31.988822006945718
+  },
+  "resizeSouth" : {
+    "hotspotX" : 214,
+    "hotspotY" : 466,
+    "pixelsPerPoint" : 31.98335484142594
+  },
+  "resizeSouthEast" : {
+    "hotspotX" : 304,
+    "hotspotY" : 279,
+    "pixelsPerPoint" : 32.04694435522781
+  },
+  "resizeSouthWest" : {
+    "hotspotX" : 304,
+    "hotspotY" : 279,
+    "pixelsPerPoint" : 31.99384250540024
+  },
+  "resizeUp" : {
+    "hotspotX" : 231,
+    "hotspotY" : 256,
+    "pixelsPerPoint" : 31.968538275296517
+  },
+  "resizeUpDown" : {
+    "hotspotX" : 232,
+    "hotspotY" : 335,
+    "pixelsPerPoint" : 31.96603798235207
+  },
+  "resizeWest" : {
+    "hotspotX" : 487,
+    "hotspotY" : 206,
+    "pixelsPerPoint" : 31.897992248701662
+  },
+  "zoomIn" : {
+    "hotspotX" : 236,
+    "hotspotY" : 220,
+    "pixelsPerPoint" : 31.988553054657103
+  },
+  "zoomOut" : {
+    "hotspotX" : 237,
+    "hotspotY" : 215,
+    "pixelsPerPoint" : 32.052190608351836
+  }
+}

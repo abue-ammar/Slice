@@ -1,0 +1,141 @@
+//
+//  CaptureBar+Options.swift
+//  Slice
+//
+//  Created by rit3zh CX on 10/1/26.
+//
+
+import ApplicationServices
+import SwiftUI
+
+extension CaptureBar {
+    var micName: String? { mics.first { $0.uniqueID == micID }?.localizedName }
+    var cameraName: String? { cameras.first { $0.uniqueID == cameraID }?.localizedName }
+
+    var micPill: some View {
+        BarPill(id: "mic", width: 200, open: picker == .mic, action: { picker = .mic }) {
+            Image(systemName: micName == nil ? "mic.slash" : "mic.fill")
+                .font(.system(size: 15, weight: .medium))
+                .frame(width: 22)
+            PillLabel(caption: "Microphone", value: micName ?? "Off")
+            if micName != nil {
+                LevelBars(level: micPreview.level).transition(.scale.combined(with: .opacity))
+            }
+        }
+        .help("Microphone")
+        .popover(isPresented: shown(.mic), arrowEdge: .top) {
+            PickerList(title: "Microphone") {
+                PickerRow(title: "No microphone", selected: micID.isEmpty, symbol: "mic.slash") { micID = ""; picker = nil }
+                ForEach(mics, id: \.uniqueID) { m in
+                    PickerRow(title: m.localizedName, selected: micID == m.uniqueID, symbol: "mic") { micID = m.uniqueID; picker = nil }
+                }
+            }
+        }
+    }
+
+    var cameraPill: some View {
+        BarPill(id: "camera", width: 200, open: picker == .camera, action: { picker = .camera }) {
+            ZStack {
+                if cameraName != nil, let session = cameraPreview.session {
+                    CameraPreview(session: session)
+                        .frame(width: 24, height: 24)
+                        .clipShape(Circle())
+                        .overlay(Circle().strokeBorder(Color.white.opacity(0.25), lineWidth: 1))
+                        .transition(.scale(scale: 0.4).combined(with: .opacity))
+                } else {
+                    Image(systemName: cameraName == nil ? "video.slash" : "video.fill")
+                        .font(.system(size: 14, weight: .medium))
+                        .transition(.opacity)
+                }
+            }
+            .frame(width: 24, height: 24)
+            .animation(.spring(response: 0.4, dampingFraction: 0.75), value: cameraPreview.session != nil)
+            PillLabel(caption: "Camera", value: cameraName ?? "Off")
+        }
+        .help("Camera")
+        .popover(isPresented: shown(.camera), arrowEdge: .top) {
+            PickerList(title: "Camera") {
+                PickerRow(title: "No camera", selected: cameraID.isEmpty, symbol: "video.slash") { cameraID = ""; picker = nil }
+                ForEach(cameras, id: \.uniqueID) { c in
+                    PickerRow(title: c.localizedName, selected: cameraID == c.uniqueID, symbol: "video") { cameraID = c.uniqueID; picker = nil }
+                }
+            }
+        }
+    }
+
+    var optionsButton: some View {
+        BarPill(id: "options", open: picker == .options, action: { picker = .options }) {
+            Text("Options").lineLimit(1)
+            Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold)).opacity(0.6)
+        }
+        .overlay(alignment: .topTrailing) {
+            if keys && !keysAllowed && kind != .device {
+                Circle().fill(.orange).frame(width: 7, height: 7).offset(x: -4, y: 6)
+            }
+        }
+        .popover(isPresented: shown(.options), arrowEdge: .top) { options }
+    }
+
+    var options: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                SectionTitle("Frame rate")
+                SwiftUI.Picker("Frame rate", selection: $fps) {
+                    Text(bestRateLabel).tag(Recorder.Settings.best)
+                    Text("60 fps").tag(60)
+                    Text("30 fps").tag(30)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .help("Best records at 120 fps on ProMotion displays when the encoder can keep up at that size, otherwise 60.")
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                SectionTitle("Audio & keys")
+                Toggle(kind != .device ? "Record sound from apps" : "Record the iPhone's sound", isOn: $screenAudio)
+                if kind != .device {
+                    Toggle("Record keyboard", isOn: $keys)
+                        .help("For showing the shortcuts you press over the video, and for typing sounds. Shortcuts (⌘, ⌃ or ⌥ with a key) and keys like esc and the arrows are recorded; for typing, only when a key went down, never which one.")
+                    if keys && !keysAllowed {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                            Text("Needs Accessibility access").foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Allow…") {
+                                let prompt = "AXTrustedCheckOptionPrompt" as CFString
+                                keysAllowed = AXIsProcessTrustedWithOptions([prompt: true] as CFDictionary)
+                            }
+                            .controlSize(.small)
+                        }
+                        .font(.system(size: 11))
+                    }
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            Divider()
+            PickerRow(title: "Open Projects", selected: false, symbol: "square.grid.2x2") {
+                picker = nil
+                model.openProjectsFromBar()
+            }
+            .padding(.horizontal, -8)
+        }
+        .font(.system(size: 12.5))
+        .padding(14)
+        .frame(width: 290)
+        .environment(\.barGlide, BarGlide(tracker: optionsGlide, namespace: optionsSpace))
+        .barPopoverAppearance()
+    }
+
+    var bestRateLabel: String {
+        if let stream = selectedDevice?.stream { return "Best (\(max(stream.maxFrameRate, 30)))" }
+        let rate: Int? = switch source {
+        case let .display(id), let .area(id, _): displays.first { $0.id == id }?.refreshRate
+        default: NSScreen.main?.maximumFramesPerSecond
+        }
+        return (rate ?? 60) >= 120 ? "Best (120)" : "Best (60)"
+    }
+
+    func shown(_ p: Picker) -> Binding<Bool> {
+        Binding(get: { picker == p }, set: { if !$0, picker == p { picker = nil } })
+    }
+}

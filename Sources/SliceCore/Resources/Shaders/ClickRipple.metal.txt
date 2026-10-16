@@ -1,0 +1,29 @@
+//
+//  ClickRipple.metal.txt
+//  SliceCore
+//
+//  Created by rit3zh CX on 10/13/26.
+//
+
+#include <CoreImage/CoreImage.h>
+using namespace metal;
+
+// A press into the surface where the click lands: the picture under it sinks in (pinched towards the point and
+// faintly shaded, like a dent), then springs back. Nothing travels outward, so there are no rings.
+// `progress` runs 0...1 over the effect; `radius` and distances are in output pixels.
+//
+// Kept as .txt and compiled at runtime by CIKernel.kernels(withMetalString:): Xcode would otherwise build it into the
+// package's default.metallib without Core Image's linker flags, which fails.
+[[ stitchable ]] float4 clickPress(coreimage::sampler src, float2 origin, float progress, float radius, float depth,
+                                   coreimage::destination dest) {
+    float2 position = dest.coord();
+    float2 offset = position - origin;
+    float r = length(offset) / radius;
+    float t = clamp(progress, 0.0, 1.0);
+    float press = t < 0.18 ? smoothstep(0.0, 0.18, t) : 1.0 - smoothstep(0.18, 1.0, t);
+    if (r >= 1.0 || press <= 0.0) return src.sample(src.transform(position));
+    float bowl = (1.0 - r * r) * (1.0 - r * r);
+    float4 color = src.sample(src.transform(origin + offset * (1.0 + depth * press * bowl)));
+    color.rgb *= 1.0 - 0.07 * press * bowl;
+    return color;
+}

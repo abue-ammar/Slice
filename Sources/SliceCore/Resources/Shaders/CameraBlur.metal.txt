@@ -1,0 +1,23 @@
+//
+//  CameraBlur.metal.txt
+//  SliceCore
+//
+//  Created by rit3zh CX on 10/7/26.
+//
+
+#include <CoreImage/CoreImage.h>
+using namespace metal;
+
+[[ stitchable ]] float4 cameraMotionBlur(coreimage::sampler layer, float4 rectA, float4 rectB, float count,
+                                         coreimage::destination dest) {
+    float2 p = dest.coord();
+    int n = max(int(count), 1);
+    float4 sum = float4(0.0);
+    for (int i = 0; i < n; i++) {
+        float f = n > 1 ? float(i) / float(n - 1) : 0.0;
+        float4 r = mix(rectA, rectB, f);
+        float2 q = rectA.xy + (p - r.xy) / r.zw * rectA.zw;
+        sum += layer.sample(layer.transform(q));
+    }
+    return sum / float(n);
+}

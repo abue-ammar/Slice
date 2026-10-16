@@ -1,0 +1,5 @@
+// Copy to Signing.local.xcconfig (ignored by git) to sign with your Developer ID.
+BUNDLE_ID_PREFIX = com.yourcompany
+DEVELOPMENT_TEAM = YOURTEAMID
+CODE_SIGN_IDENTITY = Developer ID Application
+OTHER_CODE_SIGN_FLAGS = --timestamp

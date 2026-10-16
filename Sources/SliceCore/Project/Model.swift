@@ -1,0 +1,170 @@
+//
+//  Model.swift
+//  SliceCore
+//
+//  Created by rit3zh CX on 10/15/26.
+//
+
+import CoreGraphics
+import Foundation
+
+public struct Project: Codable, Equatable {
+    public var version = 1
+    public var name: String
+    public var createdAt: Date
+    public var clips: [Clip]
+    public var cameraBlocks: [CameraBlock]
+    public var zoomBlocks: [ZoomBlock]
+    public var defaultCamera: CameraLayout
+    public var style: FrameStyle
+    public var export: ExportSettings
+    public var cuts: [Cut]
+    public var splits: [Split]
+    public var subtitles: SubtitleSettings
+    public var micVolume: Double
+    public var screenAudioVolume: Double
+    public var cursor: CursorSettings
+    public var keystrokes: KeystrokeSettings
+    public var music: [MusicClip]
+    public var audio: AudioSettings
+    public var voice: VoiceSettings
+    public var autoZoom: AutoZoomSettings
+    public var transitions: [ClipTransition]
+    public var device3D: Device3DSettings
+
+    public init(name: String, createdAt: Date = Date()) {
+        self.name = name
+        self.createdAt = createdAt
+        clips = []
+        cameraBlocks = []
+        zoomBlocks = []
+        defaultCamera = .corner(.bottomRight, .square, .small)
+        style = FrameStyle()
+        export = ExportSettings()
+        cuts = []
+        splits = []
+        subtitles = SubtitleSettings()
+        micVolume = 1
+        screenAudioVolume = 1
+        cursor = CursorSettings()
+        keystrokes = KeystrokeSettings()
+        music = []
+        audio = AudioSettings()
+        voice = VoiceSettings()
+        autoZoom = AutoZoomSettings()
+        transitions = []
+        device3D = Device3DSettings()
+    }
+
+    /// Missing keys fall back to defaults, so older projects still open.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = Project(name: "")
+        version = try c.decodeIfPresent(Int.self, forKey: .version) ?? 1
+        name = try c.decode(String.self, forKey: .name)
+        createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+        clips = try c.decodeIfPresent([Clip].self, forKey: .clips) ?? []
+        cameraBlocks = try c.decodeIfPresent([CameraBlock].self, forKey: .cameraBlocks) ?? []
+        zoomBlocks = try c.decodeIfPresent([ZoomBlock].self, forKey: .zoomBlocks) ?? []
+        defaultCamera = try c.decodeIfPresent(CameraLayout.self, forKey: .defaultCamera) ?? d.defaultCamera
+        style = try c.decodeIfPresent(FrameStyle.self, forKey: .style) ?? d.style
+        export = try c.decodeIfPresent(ExportSettings.self, forKey: .export) ?? d.export
+        cuts = try c.decodeIfPresent([Cut].self, forKey: .cuts) ?? []
+        subtitles = try c.decodeIfPresent(SubtitleSettings.self, forKey: .subtitles) ?? d.subtitles
+        splits = try c.decodeIfPresent([Split].self, forKey: .splits) ?? []
+        micVolume = try c.decodeIfPresent(Double.self, forKey: .micVolume) ?? 1
+        screenAudioVolume = try c.decodeIfPresent(Double.self, forKey: .screenAudioVolume) ?? 1
+        cursor = try c.decodeIfPresent(CursorSettings.self, forKey: .cursor) ?? d.cursor
+        keystrokes = try c.decodeIfPresent(KeystrokeSettings.self, forKey: .keystrokes) ?? d.keystrokes
+        music = try c.decodeIfPresent([MusicClip].self, forKey: .music) ?? []
+        audio = try c.decodeIfPresent(AudioSettings.self, forKey: .audio) ?? d.audio
+        voice = try c.decodeIfPresent(VoiceSettings.self, forKey: .voice) ?? d.voice
+        autoZoom = try c.decodeIfPresent(AutoZoomSettings.self, forKey: .autoZoom) ?? d.autoZoom
+        transitions = try c.decodeIfPresent([ClipTransition].self, forKey: .transitions) ?? []
+        device3D = try c.decodeIfPresent(Device3DSettings.self, forKey: .device3D) ?? d.device3D
+    }
+
+    public var hasCamera: Bool { clips.contains { $0.cameraFile != nil } }
+
+    public var hasDeviceRecording: Bool { clips.contains { $0.device != nil } }
+}
+
+public struct Clip: Codable, Equatable, Identifiable {
+    public var id: UUID
+    public var screenFile: String
+    public var cameraFile: String?
+    public var micFile: String?
+    public var screenAudioFile: String?
+    public var cursorFile: String?
+    public var transcriptFile: String?
+    public var cameraGlitches: [TimeSpan]?
+    public var hoverMoments: [Double]?
+    public var speech: [TimeSpan]?
+    public var duration: Double
+    public var screenPixelSize: CGSize
+    public var captureRect: CGRect
+    public var cursorInVideo: Bool
+    public var frameRate: Int?
+    public var device: RecordedDevice?
+
+    public init(id: UUID = UUID(), screenFile: String, cameraFile: String? = nil, micFile: String? = nil,
+                cursorFile: String? = nil, duration: Double, screenPixelSize: CGSize, captureRect: CGRect,
+                cursorInVideo: Bool = true) {
+        self.id = id
+        self.screenFile = screenFile
+        self.cameraFile = cameraFile
+        self.micFile = micFile
+        self.cursorFile = cursorFile
+        self.duration = duration
+        self.screenPixelSize = screenPixelSize
+        self.captureRect = captureRect
+        self.cursorInVideo = cursorInVideo
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        screenFile = try c.decode(String.self, forKey: .screenFile)
+        cameraFile = try c.decodeIfPresent(String.self, forKey: .cameraFile)
+        micFile = try c.decodeIfPresent(String.self, forKey: .micFile)
+        screenAudioFile = try c.decodeIfPresent(String.self, forKey: .screenAudioFile)
+        cursorFile = try c.decodeIfPresent(String.self, forKey: .cursorFile)
+        transcriptFile = try c.decodeIfPresent(String.self, forKey: .transcriptFile)
+        cameraGlitches = try c.decodeIfPresent([TimeSpan].self, forKey: .cameraGlitches)
+        hoverMoments = try c.decodeIfPresent([Double].self, forKey: .hoverMoments)
+        speech = try c.decodeIfPresent([TimeSpan].self, forKey: .speech)
+        duration = try c.decode(Double.self, forKey: .duration)
+        screenPixelSize = try c.decode(CGSize.self, forKey: .screenPixelSize)
+        captureRect = try c.decode(CGRect.self, forKey: .captureRect)
+        cursorInVideo = try c.decodeIfPresent(Bool.self, forKey: .cursorInVideo) ?? true
+        frameRate = try c.decodeIfPresent(Int.self, forKey: .frameRate)
+        device = try c.decodeIfPresent(RecordedDevice.self, forKey: .device)
+    }
+
+    public var hasEditableCursor: Bool { cursorFile != nil && !cursorInVideo && captureRect.width > 0 && captureRect.height > 0 }
+}
+
+public struct RecordedDevice: Codable, Equatable {
+    public var name: String
+    public var identifier: String
+    public var frame: String?
+    public var color: String?
+    /// Where the display sits in the recorded picture (the frame's opening), as fractions of it with a top-left origin.
+    /// The 3D mockup lifts the screen back out of the framed recording from here.
+    public var screen: CGRect?
+    /// The frame's Dynamic Island or notch over the display, likewise; painted out on the 3D phone, which has its own.
+    public var cutout: CGRect?
+    /// Asked for at recording time: the editor opens the take on the 3D phone.
+    public var opensIn3D: Bool?
+
+    public init(name: String, identifier: String, frame: String?, color: String?, screen: CGRect? = nil, cutout: CGRect? = nil,
+                opensIn3D: Bool? = nil) {
+        self.name = name
+        self.identifier = identifier
+        self.frame = frame
+        self.color = color
+        self.screen = screen
+        self.cutout = cutout
+        self.opensIn3D = opensIn3D
+    }
+}

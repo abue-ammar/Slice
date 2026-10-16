@@ -1,0 +1,12 @@
+{
+  "arrow" : {
+    "hotspotX" : 2,
+    "hotspotY" : 2,
+    "pixelsPerPoint" : 5.4
+  },
+  "pointingHand" : {
+    "hotspotX" : 15,
+    "hotspotY" : 1,
+    "pixelsPerPoint" : 5.4
+  }
+}
