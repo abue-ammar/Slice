@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  website:
+    name: Website
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npx next typegen
+      - run: npx tsc --noEmit
+
+  scripts:
+    name: Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y zsh
+      - run: |
+          for f in scripts/*.sh; do
+            if head -1 "$f" | grep -q zsh; then zsh -n "$f"; else bash -n "$f"; fi
+            echo "ok $f"
+          done
