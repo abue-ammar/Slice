@@ -35,7 +35,7 @@ export default function RoadmapPage() {
 				</section>
 
 				<section {...reveal(0)} className="mt-14" aria-labelledby="notarized">
-					<h2 id="notarized" className={heading}>
+					<h2 id="notarized" className={`${heading} scroll-mt-28`}>
 						Approved by Apple <span className="font-mono text-[12.5px] font-normal text-faint">$99 / year</span>
 					</h2>
 					<Checklist items={NOTARIZED.items} done={NOTARIZED.done} />

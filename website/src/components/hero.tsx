@@ -1,10 +1,14 @@
+import Link from "next/link";
 import { OG_VIDEO } from "@/lib/metadata";
 import { site } from "@/lib/site";
 import { step } from "@/lib/reveal";
 import { BrandGlyph } from "./glyphs";
+import CopyButton from "./license/copy-button";
 import HeroTitle from "./hero-title";
 import MetalButton from "./metal-button";
 import Video from "./video";
+
+const UNQUARANTINE = "xattr -dr com.apple.quarantine /Applications/Slice.app";
 
 const frame = "scroll-settle origin-top overflow-hidden rounded-[20px] bg-black ring-1 ring-line will-change-transform max-[520px]:rounded-xl";
 
@@ -28,6 +32,30 @@ export default function Hero() {
 					<BrandGlyph id="github" size={16} />
 					Star on GitHub
 				</a>
+			</div>
+			<div className="blur-in mx-auto mt-6 flex max-w-[34rem] flex-col items-center gap-3" style={step(2.5)}>
+				<p className="text-[13.5px] text-pretty text-faint">
+					If macOS says it can’t verify Slice, run this in Terminal.{" "}
+					<Link
+						href="/roadmap#notarized"
+						className="group/learn inline-flex items-center gap-1 font-medium text-muted transition-colors duration-200 ease-quart hover:text-fg"
+					>
+						Learn more
+						<svg
+							width="10"
+							height="10"
+							viewBox="0 0 10 10"
+							aria-hidden
+							className="transition-transform duration-300 ease-settle group-hover/learn:translate-x-0.5 motion-reduce:transition-none"
+						>
+							<path d="M2 5h6M5.5 2.5 8 5 5.5 7.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+						</svg>
+					</Link>
+				</p>
+				<div className="flex max-w-full items-center gap-1.5 rounded-full bg-raised p-1 pl-4 inset-ring inset-ring-line max-[520px]:flex-col max-[520px]:rounded-3xl max-[520px]:p-2">
+					<code className="min-w-0 font-mono text-[12.5px] break-all text-muted">{UNQUARANTINE}</code>
+					<CopyButton text={UNQUARANTINE} label="Copy" />
+				</div>
 			</div>
 
 			<div className="blur-in mx-auto mt-[clamp(72px,10vw,112px)] max-w-site" style={step(3)}>
