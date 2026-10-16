@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
 import { site } from "./site";
 
-export const OG_IMAGE = { url: "/media/og.jpg", width: 1200, height: 630, alt: "The Slice editor with a recording on a wallpaper, zooms on the timeline." };
+export const OG_IMAGE = {
+	url: "/media/og.jpg",
+	width: 2400,
+	height: 1200,
+	type: "image/jpeg",
+	alt: "Slice: screen recordings, beautifully simple. The editor with a recording on a wallpaper and zooms on the timeline.",
+};
+
+export const OG_VIDEO = { url: `${site.url}/media/slice-editor.mp4`, secureUrl: `${site.url}/media/slice-editor.mp4`, width: 2240, height: 1476, type: "video/mp4" };
 
 type Page = {
 	title: string;

@@ -20,7 +20,7 @@ export default async function BlogPost({ params }: PageProps<"/blog/[slug]">) {
 	const MDX = post.data.body;
 	const { newer, older } = neighbours(post);
 	const toc = post.data.toc.filter((item) => item.depth === 2);
-	const markdown = `# ${post.data.title}\n\n${await post.data.getText("raw")}`;
+	const markdown = `# ${post.data.title}\n\n${await post.data.getText("processed")}`;
 	const pager = [
 		{ post: older, label: "Previous" },
 		{ post: newer, label: "Next" },

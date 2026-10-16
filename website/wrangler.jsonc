@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "website",
+	"name": "slice-website",
 	"main": ".open-next/worker.js",
 	"compatibility_date": "2026-10-06",
 	"compatibility_flags": [
@@ -16,7 +16,7 @@
 	"services": [
 		{
 			"binding": "WORKER_SELF_REFERENCE",
-			"service": "website"
+			"service": "slice-website"
 		}
 	],
 	"observability": {

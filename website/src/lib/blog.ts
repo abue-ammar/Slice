@@ -16,7 +16,7 @@ export const formatDate = (date: Date) =>
 const WORDS_PER_MINUTE = 230;
 
 export async function readingTime(post: Post) {
-	const words = (await post.data.getText("raw")).split(/\s+/).filter(Boolean).length;
+	const words = (await post.data.getText("processed")).split(/\s+/).filter(Boolean).length;
 	return `${Math.max(1, Math.round(words / WORDS_PER_MINUTE))} min read`;
 }
 

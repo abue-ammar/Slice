@@ -11,7 +11,7 @@ npm run deploy    # build and deploy to Cloudflare
 
 Links (download, source, socials) and the version live in `src/lib/site.ts`.
 
-Set `NEXT_PUBLIC_SITE_URL` to the deployed origin (for example `NEXT_PUBLIC_SITE_URL=https://your-domain npm run deploy`, or in `.env.production`). It's baked in at build time and used for canonical links, `sitemap.xml`, `robots.txt` and the absolute URLs of social previews; without it they point at localhost. Page titles, descriptions and Open Graph tags come from `pageMetadata` in `src/lib/metadata.ts`; the favicon (`src/app/favicon.ico`, 16–48 px), `icon.png`, `apple-icon.png` and `manifest.ts` sit in `src/app`, and `public/media/og.jpg` is the 1200×630 preview. A social with an empty `href` (Discord, for now) is hidden everywhere until it's filled in.
+Set `NEXT_PUBLIC_SITE_URL` to the deployed origin (for example `NEXT_PUBLIC_SITE_URL=https://your-domain npm run deploy`, or in `.env.production`). It's baked in at build time and used for canonical links, `sitemap.xml`, `robots.txt` and the absolute URLs of social previews; without it they fall back to `https://slice.rit3zh.dev`. Page titles, descriptions and Open Graph tags come from `pageMetadata` in `src/lib/metadata.ts`; the favicon (`src/app/favicon.ico`, 16–48 px), `icon.png`, `apple-icon.png` and `manifest.ts` sit in `src/app`, and `public/media/og.jpg` is the 2400×1200 banner used as the social preview. A social with an empty `href` (Discord, for now) is hidden everywhere until it's filled in.
 
 ## Where things come from
 

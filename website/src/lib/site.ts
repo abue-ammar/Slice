@@ -1,9 +1,9 @@
 export const site = {
 	name: "Slice",
-	url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, ""),
+	url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://slice.rit3zh.dev").replace(/\/$/, ""),
 	tagline: "Screen recorder and editor for Mac",
 	description:
-		"Slice is a native Mac app that records your screen, camera and microphone, then turns the take into a polished video. Free, no account, and it stays on your Mac.",
+		"Slice is a free, native Mac screen recorder and editor. Record your screen, camera and microphone, then add auto zooms, smooth cursor, wallpapers, transitions and captions. No account, and nothing leaves your Mac.",
 	author: { name: "rit3zh", url: "https://x.com/rit3zh", handle: "@rit3zh" },
 	version: "0.1.0",
 	repo: "https://github.com/rit3zh/slice",

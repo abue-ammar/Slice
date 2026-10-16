@@ -1,3 +1,4 @@
+import { OG_VIDEO } from "@/lib/metadata";
 import { site } from "@/lib/site";
 import { step } from "@/lib/reveal";
 import { BrandGlyph } from "./glyphs";
@@ -33,7 +34,7 @@ export default function Hero() {
 				<div className={`${frame} aspect-[2240/1476]`}>
 					<Video
 						className="block size-full object-cover"
-						src="/media/slice-editor.mp4"
+						src={OG_VIDEO.url}
 						poster="/media/slice-editor.jpg"
 						label="The Slice editor: a recording on a wallpaper background in the preview, the inspector switching between background, cursor and click settings, and a timeline of zooms under the take."
 						eager

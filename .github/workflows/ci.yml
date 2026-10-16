@@ -52,3 +52,5 @@ jobs:
             if head -1 "$f" | grep -q zsh; then zsh -n "$f"; else bash -n "$f"; fi
             echo "ok $f"
           done
+      - name: ShellCheck
+        run: shellcheck --shell=bash --severity=warning scripts/*.sh

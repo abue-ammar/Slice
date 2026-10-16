@@ -8,6 +8,7 @@ export const blog = defineDocs({
 			date: z.coerce.date(),
 			cover: z.string().optional(),
 		}),
+		postprocess: { includeProcessedMarkdown: true },
 	},
 });
 
