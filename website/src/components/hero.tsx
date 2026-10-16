@@ -8,7 +8,7 @@ import HeroTitle from "./hero-title";
 import MetalButton from "./metal-button";
 import Video from "./video";
 
-const UNQUARANTINE = "xattr -dr com.apple.quarantine /Applications/Slice.app";
+const INSTALL = `curl -fsSL ${site.url}/install.sh | bash`;
 
 const frame = "scroll-settle origin-top overflow-hidden rounded-[20px] bg-black ring-1 ring-line will-change-transform max-[520px]:rounded-xl";
 
@@ -35,7 +35,7 @@ export default function Hero() {
 			</div>
 			<div className="blur-in mx-auto mt-6 flex max-w-[34rem] flex-col items-center gap-3" style={step(2.5)}>
 				<p className="text-[13.5px] text-pretty text-faint">
-					If macOS says it can’t verify Slice, run this in Terminal.{" "}
+					Or install from Terminal and skip the “can’t verify” warning.{" "}
 					<Link
 						href="/roadmap#notarized"
 						className="group/learn inline-flex items-center gap-1 font-medium text-muted transition-colors duration-200 ease-quart hover:text-fg"
@@ -53,8 +53,8 @@ export default function Hero() {
 					</Link>
 				</p>
 				<div className="flex max-w-full items-center gap-1.5 rounded-full bg-raised p-1 pl-4 inset-ring inset-ring-line max-[520px]:flex-col max-[520px]:rounded-3xl max-[520px]:p-2">
-					<code className="min-w-0 font-mono text-[12.5px] break-all text-muted">{UNQUARANTINE}</code>
-					<CopyButton text={UNQUARANTINE} label="Copy" />
+					<code className="min-w-0 font-mono text-[12.5px] break-all text-muted">{INSTALL}</code>
+					<CopyButton text={INSTALL} label="Copy" />
 				</div>
 			</div>
 

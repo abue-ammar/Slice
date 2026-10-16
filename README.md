@@ -40,15 +40,19 @@
 
 ## Install
 
-Download `Slice.dmg` from [Releases](https://github.com/rit3zh/slice/releases/latest) and drag Slice to Applications. Requires macOS 15 or later on Apple silicon.
+The easiest way is one line in Terminal. It downloads the latest release, moves Slice to Applications and opens it, with no "can't verify" warning:
 
-Slice isn't notarized by Apple yet, so the first time you open it macOS says it can't verify the app. To open it anyway:
+```sh
+curl -fsSL https://slice.rit3zh.dev/install.sh | bash
+```
 
-1. Open Slice once and click **Done**.
-2. Go to **System Settings › Privacy & Security**, scroll down and click **Open Anyway** next to Slice.
-3. Confirm with your password. After that it opens normally.
+Requires macOS 15 or later on Apple silicon.
 
-Or, in Terminal: `xattr -dr com.apple.quarantine /Applications/Slice.app`
+Or download `Slice.dmg` from [Releases](https://github.com/rit3zh/slice/releases/latest). Slice isn't notarized by Apple yet, so macOS says it can't verify it. To open it anyway:
+
+1. Open the DMG. If macOS blocks it, click **Done**, then go to **System Settings › Privacy & Security** and click **Open Anyway**.
+2. Drag Slice to Applications.
+3. Open Slice. If macOS blocks it again, click **Open Anyway** in the same place, or run `xattr -dr com.apple.quarantine /Applications/Slice.app`.
 
 ## Build
 
