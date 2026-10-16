@@ -14,7 +14,10 @@
   <img src="https://img.shields.io/badge/macOS-15%2B-5E5CE6?style=flat&labelColor=1c1c1e" alt="macOS 15 or later">
   <img src="https://img.shields.io/badge/Swift-6-FF9F0A?style=flat&logo=swift&logoColor=white&labelColor=1c1c1e" alt="Swift 6">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Source--available-30D158?style=flat&labelColor=1c1c1e" alt="Source-available license"></a>
-  <a href="https://buymeacoffee.com/rit3zh"><img src="https://img.shields.io/badge/Buy_me_a_coffee-FFD60A?style=flat&logo=buymeacoffee&logoColor=white" alt="Buy me a coffee"></a>
+
+<p align="center">
+  <a href="https://www.buymeacoffee.com/rit3zh" target="_blank" title="Buy me a coffee"><img src="https://iili.io/JoQ1MeS.md.png" alt="Buy me a coffee" width="130"></a>
+</p>
 </p>
 
 <br>
@@ -72,7 +75,6 @@ You can use it for free, including at work, and read, build and modify the code.
 ## Credits
 
 [FluidAudio](https://github.com/FluidInference/FluidAudio), [Parakeet](https://huggingface.co/FluidInference/parakeet-ultra-coreml), [DeepFilterNet](https://github.com/Rikorose/DeepFilterNet), [SmoothGradient](https://github.com/raymondjavaxx/SmoothGradient), [border-beam](https://beam.jakubantalik.com), and the [3D iPhone models](Sources/SliceCore/Resources/Models/CREDITS.txt) by their Sketchfab artists.
-
 <br>
 
 <p align="center"><sub>Made by <a href="https://x.com/rit3zh">@rit3zh</a></sub></p>
