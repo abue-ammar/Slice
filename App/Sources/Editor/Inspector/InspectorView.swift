@@ -68,6 +68,8 @@ struct SelectionInspector: View {
         case .music: "Music"
         case .transition: editor.selectedTransition?.transition.kind.name ?? "Transition"
         case .keyframe: "3D keyframe"
+        case .redact: "Blur"
+        case .spotlight: "Spotlight"
         case nil: ""
         }
     }
@@ -80,6 +82,8 @@ struct SelectionInspector: View {
         case .music: "music.note"
         case .transition: editor.selectedTransition?.transition.kind.symbol ?? "rectangle.2.swap"
         case .keyframe: "diamond"
+        case .redact: "eye.slash"
+        case .spotlight: SpotlightLane.symbol
         case .section, nil: "film"
         }
     }
@@ -91,6 +95,8 @@ struct SelectionInspector: View {
         case .music: Theme.music
         case .transition: Color.white
         case .keyframe: Theme.phone
+        case .redact: Theme.privacy
+        case .spotlight: Theme.spotlight
         case .section, nil: Theme.clip
         }
     }
@@ -116,6 +122,7 @@ struct SelectionInspector: View {
                     InfoRow(title: "Length", value: format(seg.duration))
                     PanelNote("Drag the section's edges on the timeline to trim it. Split with ✂︎ at the playhead.")
                 }
+                SectionSpeedPicker(editor: editor, segment: seg)
                 if editor.canDeleteSection {
                     Button("Delete this section") { editor.deleteSelectedSection() }
                         .buttonStyle(DestructiveButtonStyle())
@@ -144,6 +151,10 @@ struct SelectionInspector: View {
             if let placed = editor.selectedTransition { TransitionInspector(editor: editor, placed: placed) }
         case .keyframe:
             if let key = editor.selectedKeyframe { KeyframeInspector(editor: editor, key: key) }
+        case .redact:
+            if let block = editor.selectedRedaction { RedactInspector(editor: editor, block: block) }
+        case .spotlight:
+            if let block = editor.selectedSpotlight { SpotlightInspector(editor: editor, block: block) }
         case nil:
             EmptyView()
         }

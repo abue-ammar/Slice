@@ -104,7 +104,8 @@ extension EditorModel {
         }
     }
 
-    private func note(_ text: String) {
+    func note(_ text: String, symbol: String = "sparkle.magnifyingglass") {
+        noteSymbol = symbol
         smartZoomNote = text
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(4))

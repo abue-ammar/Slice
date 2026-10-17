@@ -105,7 +105,7 @@ struct SmartZoomStatus: View {
                         .help("Stop")
                 }
             } else if let note = editor.smartZoomNote {
-                Label(note, systemImage: "sparkle.magnifyingglass").font(.system(size: 12))
+                Label(note, systemImage: editor.noteSymbol).font(.system(size: 12))
             }
         }
         .foregroundStyle(.secondary)

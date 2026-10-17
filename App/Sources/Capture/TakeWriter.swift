@@ -46,6 +46,7 @@ final class TakeWriter {
         self.pacer = pacer
         self.device = device
         screen = try AVAssetWriter(outputURL: dir.appendingPathComponent("screen.mov"), fileType: .mov)
+        screen.movieFragmentInterval = ProjectBundle.fragmentInterval
         var compression: [String: Any] = [
             AVVideoQualityKey: 0.9,
             AVVideoExpectedSourceFrameRateKey: fps,
@@ -61,6 +62,7 @@ final class TakeWriter {
         screenInput.expectsMediaDataInRealTime = true
         screen.add(screenInput)
         camera = hasCamera ? try AVAssetWriter(outputURL: dir.appendingPathComponent("camera.mov"), fileType: .mov) : nil
+        camera?.movieFragmentInterval = ProjectBundle.fragmentInterval
         mic = hasMic ? try AudioTrackWriter(url: dir.appendingPathComponent("mic.m4a"), channels: 1) : nil
         screenAudio = hasScreenAudio ? try AudioTrackWriter(url: dir.appendingPathComponent("screen-audio.m4a"), channels: 2) : nil
         analysis = LiveTakeAnalyzer(folder: dir, pointSize: pointSize)
@@ -171,6 +173,19 @@ final class TakeWriter {
         screenAudio?.append(sample, start: start)
     }
 
+    var cursorURL: URL { screen.outputURL.deletingLastPathComponent().appendingPathComponent("cursor.json") }
+
+    /// The clip this take becomes if every file is written: what a take cut off is put back as.
+    func planned(captureRect: CGRect) -> Clip {
+        var clip = Clip(id: id, screenFile: "\(relative)/screen.mov", cameraFile: camera == nil ? nil : "\(relative)/camera.mov",
+                        micFile: mic == nil ? nil : "\(relative)/mic.m4a", cursorFile: "\(relative)/cursor.json", duration: 0,
+                        screenPixelSize: screenSize, captureRect: captureRect, cursorInVideo: false)
+            .withScreenAudio(screenAudio == nil ? nil : "\(relative)/screen-audio.m4a")
+            .withFrameRate(fps)
+        clip.device = device
+        return clip
+    }
+
     func finish(at stop: CMTime, captureRect: CGRect, cursor: CursorLogger.Result) async -> Clip? {
         guard let start = startTime, stop > start else {
             screen.cancelWriting()
@@ -208,29 +223,14 @@ final class TakeWriter {
             writer.endSession(atSourceTime: stop)
             await writer.finishWriting()
         }
+        try? JSONEncoder().encode(cursor.log(since: start.seconds)).write(to: cursorURL)
         guard screen.status == .completed else { return nil }
 
-        let startSeconds = start.seconds
-        let log = CursorLog(
-            samples: cursor.samples.map { .init(t: $0.t - startSeconds, x: $0.x, y: $0.y) },
-            clicks: cursor.clicks.map { .init(t: $0.t - startSeconds, x: $0.x, y: $0.y) },
-            types: cursor.types.map { .init(t: $0.t - startSeconds, type: $0.type) },
-            keys: cursor.keys.map { KeyPress(t: $0.t - startSeconds, modifiers: $0.modifiers, key: $0.key) },
-            scrolls: cursor.scrolls.map { .init(t: $0.t - startSeconds, x: $0.x, y: $0.y) },
-            typing: cursor.typing.map { $0 - startSeconds },
-            hits: cursor.hits.map { KeyHit(t: $0.t - startSeconds, kind: $0.kind) })
-        let cursorRel = "\(relative)/cursor.json"
-        let cursorURL = screen.outputURL.deletingLastPathComponent().appendingPathComponent("cursor.json")
-        try? JSONEncoder().encode(log).write(to: cursorURL)
-
-        var clip = Clip(id: id, screenFile: "\(relative)/screen.mov",
-                        cameraFile: camera?.status == .completed ? "\(relative)/camera.mov" : nil,
-                        micFile: micDone ? "\(relative)/mic.m4a" : nil,
-                        cursorFile: cursorRel, duration: (stop - start).seconds,
-                        screenPixelSize: screenSize, captureRect: captureRect, cursorInVideo: false)
-            .withScreenAudio(screenAudioDone ? "\(relative)/screen-audio.m4a" : nil)
-            .withFrameRate(fps)
-        clip.device = device
+        var clip = planned(captureRect: captureRect)
+        clip.duration = (stop - start).seconds
+        if camera?.status != .completed { clip.cameraFile = nil }
+        if !micDone { clip.micFile = nil }
+        if !screenAudioDone { clip.screenAudioFile = nil }
         // Measured while recording, so the editor needn't scan the files again.
         let live = await analysis.finish(duration: (stop - start).seconds)
         if clip.hasEditableCursor { clip.hoverMoments = live.hoverMoments }

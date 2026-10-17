@@ -64,6 +64,43 @@ struct ClicksSection: View {
         }
         .animation(.snappy, value: cursor.clickEffect)
         .animation(Theme.swap, value: cursor.clickPress)
+        PanelDivider()
+        SpotlightControls(spotlight: $editor.project.cursor.spotlight)
+    }
+}
+
+private struct SpotlightControls: View {
+    @Binding var spotlight: ClickSpotlight
+
+    var body: some View {
+        let d = ClickSpotlight()
+        PanelSection("Spotlight") {
+            PanelToggle("Spotlight each click", isOn: $spotlight.enabled)
+                .help("A soft circle of focus around each click, while the rest of the screen dims or blurs for a moment.")
+            if !spotlight.enabled {
+                PanelNote("Or place one yourself on the timeline's Spotlight track, on a spot or following the pointer.")
+                    .transition(.opacity)
+            }
+            if spotlight.enabled {
+                VStack(spacing: 12) {
+                    SegmentedControl(selection: $spotlight.mode, options: SpotlightMode.allCases, title: \.label,
+                                     symbol: { $0.symbol })
+                    PanelSlider("Size", value: $spotlight.size, in: 0.5 ... 2.5, default: d.size) {
+                        String(format: "%.1f×", $0)
+                    }
+                    PanelSlider(spotlight.mode == .dim ? "Dim" : "Blur", value: $spotlight.strength, in: 0.1 ... 1,
+                                default: d.strength) { "\(Int(($0 * 100).rounded()))%" }
+                    MoreOptions(id: "clickSpotlight") {
+                        PanelSlider("Hold", value: $spotlight.hold, in: 0.3 ... 3, default: d.hold) {
+                            String(format: "%.1fs", $0)
+                        }
+                        .help("How long the spotlight stays after each click before it fades.")
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .animation(Theme.swap, value: spotlight.enabled)
     }
 }
 

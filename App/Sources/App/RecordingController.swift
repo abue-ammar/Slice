@@ -195,7 +195,14 @@ final class RecordingController: ObservableObject {
         project?.clips.append(clip)
         finishedSeconds += clip.duration
         elapsed = finishedSeconds
-        if let bundle, let project { try? bundle.save(project) }
+        guard let bundle, let project else { return }
+        do {
+            try bundle.save(project)
+            bundle.clearRecordingNote(clip.id)
+        } catch {
+            // The note stays, so the take is put back from it next launch.
+            log.error("Couldn't save the take: \(error.localizedDescription)")
+        }
     }
 
     private func cleanUpEmptyNewProject() {

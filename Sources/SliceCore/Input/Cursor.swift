@@ -27,6 +27,7 @@ public struct CursorSettings: Codable, Equatable {
     public var clickPress = false
     public var clickPressScale = 0.8
     public var clickPressDuration = 0.3
+    public var spotlight = ClickSpotlight()
     public var loopPosition = false
     public var hideWhenIdle = false
     public var idleDelay = 2.0
@@ -59,6 +60,7 @@ public struct CursorSettings: Codable, Equatable {
         clickPress = try c.decodeIfPresent(Bool.self, forKey: .clickPress) ?? d.clickPress
         clickPressScale = try c.decodeIfPresent(Double.self, forKey: .clickPressScale) ?? d.clickPressScale
         clickPressDuration = try c.decodeIfPresent(Double.self, forKey: .clickPressDuration) ?? d.clickPressDuration
+        spotlight = (try? c.decodeIfPresent(ClickSpotlight.self, forKey: .spotlight)) ?? d.spotlight
         loopPosition = try c.decodeIfPresent(Bool.self, forKey: .loopPosition) ?? d.loopPosition
         hideWhenIdle = try c.decodeIfPresent(Bool.self, forKey: .hideWhenIdle) ?? d.hideWhenIdle
         idleDelay = try c.decodeIfPresent(Double.self, forKey: .idleDelay) ?? d.idleDelay
@@ -66,8 +68,8 @@ public struct CursorSettings: Codable, Equatable {
 
     private enum CodingKeys: String, CodingKey {
         case visible, size, style, smoothing, motionBlur, tilt, tiltMaxAngle, tiltSmoothing, stateDelay, clickEffect,
-             clickEffectSize, clickSound, clickSoundVolume, clickPress, clickPressScale, clickPressDuration, loopPosition,
-             hideWhenIdle, idleDelay
+             clickEffectSize, clickSound, clickSoundVolume, clickPress, clickPressScale, clickPressDuration, spotlight,
+             loopPosition, hideWhenIdle, idleDelay
         case legacySmooth = "smooth"
     }
 
@@ -89,6 +91,7 @@ public struct CursorSettings: Codable, Equatable {
         try c.encode(clickPress, forKey: .clickPress)
         try c.encode(clickPressScale, forKey: .clickPressScale)
         try c.encode(clickPressDuration, forKey: .clickPressDuration)
+        try c.encode(spotlight, forKey: .spotlight)
         try c.encode(loopPosition, forKey: .loopPosition)
         try c.encode(hideWhenIdle, forKey: .hideWhenIdle)
         try c.encode(idleDelay, forKey: .idleDelay)

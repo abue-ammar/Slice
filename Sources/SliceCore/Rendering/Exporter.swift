@@ -17,14 +17,13 @@ public enum Exporter {
     public static func export(project: Project, bundle: ProjectBundle, cursor: CursorTrack, captions: [Caption] = [], to url: URL,
                               progress: @escaping @Sendable (Double) -> Void) async throws {
         let settings = project.export
+        if settings.format == .gif {
+            return try await exportGIF(project: project, bundle: bundle, cursor: cursor, captions: captions, to: url,
+                                       progress: progress)
+        }
         let size = project.renderSize
-        let state = RenderState(project: project, cursor: cursor)
-        state.update(options: FrameRenderer.Options(accurateSegmentation: true))
-        state.update(backgroundImage: bundle.backgroundImage(for: project))
-        state.update(captions: captions)
-        state.add(stills: await TransitionStills.load(project.transitionStills, project: project, bundle: bundle))
-        let built = try await CompositionBuilder.build(project: project, bundle: bundle, state: state,
-                                                       renderSize: size, fps: settings.fps)
+        let built = try await build(project: project, bundle: bundle, cursor: cursor, captions: captions, size: size,
+                                    fps: settings.fps)
         let total = max(project.duration, 0.001)
 
         let reader = try AVAssetReader(asset: built.composition)
@@ -53,7 +52,7 @@ public enum Exporter {
         try? FileManager.default.removeItem(at: url)
         let writer = try AVAssetWriter(outputURL: url, fileType: url.pathExtension.lowercased() == "mov" ? .mov : .mp4)
         var compression: [String: Any] = [
-            AVVideoAverageBitRateKey: settings.bitRate(for: size),
+            AVVideoAverageBitRateKey: settings.bitRate(for: size, duration: project.duration),
             AVVideoExpectedSourceFrameRateKey: settings.fps,
             AVVideoMaxKeyFrameIntervalDurationKey: 2,
         ]
@@ -74,7 +73,7 @@ public enum Exporter {
         if audioOut != nil {
             let input = AVAssetWriterInput(mediaType: .audio, outputSettings: [
                 AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 48000, AVNumberOfChannelsKey: 2,
-                AVEncoderBitRateKey: 256_000,
+                AVEncoderBitRateKey: settings.audioBitRate,
             ])
             input.expectsMediaDataInRealTime = false
             writer.add(input)
@@ -109,6 +108,16 @@ public enum Exporter {
         progress(1)
     }
 
+    static func build(project: Project, bundle: ProjectBundle, cursor: CursorTrack, captions: [Caption], size: CGSize,
+                      fps: Int) async throws -> CompositionBuilder.Result {
+        let state = RenderState(project: project, cursor: cursor)
+        state.update(options: FrameRenderer.Options(accurateSegmentation: true))
+        state.update(backgroundImage: bundle.backgroundImage(for: project))
+        state.update(captions: captions)
+        state.add(stills: await TransitionStills.load(project.transitionStills, project: project, bundle: bundle))
+        return try await CompositionBuilder.build(project: project, bundle: bundle, state: state, renderSize: size, fps: fps)
+    }
+
     private static func pump(_ output: AVAssetReaderOutput, into input: AVAssetWriterInput, label: String,
                              process: ((CMSampleBuffer) -> Void)? = nil,
                              progress: @escaping @Sendable (Double) -> Void) async {
@@ -138,7 +147,7 @@ public enum Exporter {
         }
     }
 
-    private struct ReaderBox: @unchecked Sendable {
+    struct ReaderBox: @unchecked Sendable {
         let reader: AVAssetReader
     }
 

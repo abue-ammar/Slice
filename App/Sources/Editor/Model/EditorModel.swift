@@ -42,6 +42,8 @@ final class EditorModel: ObservableObject {
         case music(UUID)
         case transition(UUID)
         case keyframe(UUID)
+        case redact(UUID)
+        case spotlight(UUID)
     }
 
     let bundle: ProjectBundle
@@ -54,7 +56,11 @@ final class EditorModel: ObservableObject {
         didSet {
             if selection != nil { wordSelection = nil }
             updateRenderOptions()
-            if selection != oldValue { revealSelectedLens() }
+            if selection != oldValue {
+                revealSelectedLens()
+                revealSelectedRedaction()
+                revealSelectedSpotlight()
+            }
         }
     }
 
@@ -82,6 +88,10 @@ final class EditorModel: ObservableObject {
     let audition = MusicAudition()
     @Published var smartZoomProgress: Double?
     @Published var smartZoomNote: String?
+    @Published var noteSymbol = "sparkle.magnifyingglass"
+    @Published var privacyScanProgress: Double?
+    var privacyScanTask: Task<Void, Never>?
+    @Published var quietScanRunning = false
     var smartZoomTask: Task<Void, Never>?
     var buildTask: Task<Void, Never>?
     var buildGeneration = 0
@@ -199,12 +209,19 @@ struct ExportJob: Equatable {
         case failed(String)
     }
 
-    let url: URL
-    let size: CGSize
+    var url: URL
+    let format: ExportFormat
+    var size: CGSize
     let fps: Int
     let hevc: Bool
-    let bitRate: Int
+    var bitRate: Int
     let duration: Double
+    /// Every file this export writes: one, or one per shape in a batch.
+    var outputs: [URL]
+    var step = 0
+    /// The shape being written, in a batch.
+    var shape: OutputAspect?
+    let byteLimit: Int64?
     var phase = Phase.preparing
     var note: String?
     var progress = 0.0

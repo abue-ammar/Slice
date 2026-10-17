@@ -119,18 +119,29 @@ public enum CompositionBuilder {
         var cursor = CMTime.zero
         var joins: [CMTime] = []
         var previous: Segment?
+        let audioTracks = [micTrack, screenAudioTrack] + [originalMicTrack].compactMap { $0 }
         for seg in project.segments {
             let src = sources[seg.clipIndex]!
             let from = CMTime(seconds: seg.sourceStart, preferredTimescale: scale)
-            let len = CMTime(seconds: seg.duration, preferredTimescale: scale)
+            let len = CMTime(seconds: seg.sourceDuration, preferredTimescale: scale)
+            let played = seg.isSpedUp ? CMTime(seconds: seg.duration, preferredTimescale: scale) : len
             try await insert(src.screen, from: from, duration: len, into: screenTrack, at: cursor)
             try await insert(src.camera, from: from, duration: len, into: cameraTrack, at: cursor)
-            try await insert(src.mic, from: from, duration: len, into: micTrack, at: cursor)
-            if let originalMicTrack { try await insert(src.originalMic, from: from, duration: len, into: originalMicTrack, at: cursor) }
-            try await insert(src.screenAudio, from: from, duration: len, into: screenAudioTrack, at: cursor)
-            if let p = previous, p.clipIndex != seg.clipIndex || abs(p.sourceEnd - seg.sourceStart) > 0.001 { joins.append(cursor) }
+            if seg.isSpedUp {
+                // Sped-up stretches play without sound: at 2–8× speech is noise.
+                for track in [screenTrack, cameraTrack] {
+                    track.scaleTimeRange(CMTimeRange(start: cursor, duration: len), toDuration: played)
+                }
+                for track in audioTracks { track.insertEmptyTimeRange(CMTimeRange(start: cursor, duration: played)) }
+            } else {
+                try await insert(src.mic, from: from, duration: len, into: micTrack, at: cursor)
+                if let originalMicTrack { try await insert(src.originalMic, from: from, duration: len, into: originalMicTrack, at: cursor) }
+                try await insert(src.screenAudio, from: from, duration: len, into: screenAudioTrack, at: cursor)
+            }
+            if let p = previous, p.clipIndex != seg.clipIndex || abs(p.sourceEnd - seg.sourceStart) > 0.001
+                || p.isSpedUp != seg.isSpedUp { joins.append(cursor) }
             previous = seg
-            cursor = cursor + len
+            cursor = cursor + played
         }
 
         // A track with no media at all (e.g. no camera in any take) would make the composition invalid.
@@ -141,7 +152,7 @@ public enum CompositionBuilder {
         }
         var layout = AudioLayout(mic: micTrack.trackID, originalVoice: originalMicTrack?.trackID, screen: screenAudioTrack.trackID,
                                  joins: joins.map(\.seconds), music: [])
-        for track in [micTrack, screenAudioTrack] + [originalMicTrack].compactMap({ $0 }) where track.segments.allSatisfy(\.isEmpty) {
+        for track in audioTracks where track.segments.allSatisfy(\.isEmpty) {
             comp.removeTrack(track)
             if track === micTrack { layout.mic = nil } else if track === screenAudioTrack { layout.screen = nil } else { layout.originalVoice = nil }
         }

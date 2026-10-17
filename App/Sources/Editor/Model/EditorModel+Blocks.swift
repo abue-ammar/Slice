@@ -10,7 +10,7 @@ import SliceCore
 import SwiftUI
 
 extension EditorModel {
-    enum TimelineLane { case camera, zoom, music }
+    enum TimelineLane { case camera, zoom, blur, spotlight, music }
 
     func gap(around t: Double, in ranges: [(id: UUID, start: Double, end: Double)], excluding: UUID? = nil) -> ClosedRange<Double> {
         let others = ranges.filter { $0.id != excluding }
@@ -25,8 +25,13 @@ extension EditorModel {
     func proposedRange(_ lane: TimelineLane, at t: Double) -> ClosedRange<Double>? {
         let t = min(max(t, 0), duration)
         switch lane {
-        case .camera, .zoom:
-            let ranges = lane == .camera ? cameraRanges : zoomRanges
+        case .camera, .zoom, .blur, .spotlight:
+            let ranges = switch lane {
+            case .camera: cameraRanges
+            case .zoom: zoomRanges
+            case .spotlight: spotlightRanges
+            default: redactRanges
+            }
             guard !ranges.contains(where: { $0.start <= t && t < $0.end }) else { return nil }
             let space = gap(around: t, in: ranges)
             let length = min(lane == .camera ? 5 : 3, space.upperBound - space.lowerBound)
@@ -48,6 +53,8 @@ extension EditorModel {
         switch lane {
         case .camera: addCameraBlock(at: t)
         case .zoom: addZoomBlock(at: t)
+        case .blur: addRedaction(at: t)
+        case .spotlight: addSpotlight(at: t)
         case .music: Task { await addMusicClip(at: t) }
         }
     }
@@ -140,6 +147,8 @@ extension EditorModel {
         case let .music(id): project.music.removeAll { $0.id == id }
         case let .transition(id): project.transitions.removeAll { $0.id == id }
         case let .keyframe(id): project.device3D.keyframes.removeAll { $0.id == id }
+        case let .redact(id): project.redactions.removeAll { $0.id == id }
+        case let .spotlight(id): project.spotlights.removeAll { $0.id == id }
         case nil: return
         }
         selection = nil

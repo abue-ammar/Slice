@@ -32,19 +32,30 @@ final class AppModel: ObservableObject {
     @Published private(set) var setupAppendTo: EditorModel?
     @Published private(set) var recordingPhase: RecordingController.Phase?
     private var phaseWatch: AnyCancellable?
-    var openWindow: OpenWindowAction? { didSet { openPendingFiles() } }
+    var openWindow: OpenWindowAction? {
+        didSet {
+            openPendingFiles()
+            if recovered != nil { showRecovered() }
+        }
+    }
     var dismissWindow: DismissWindowAction?
     @Published var recording: RecordingController?
     @Published var projects: [ProjectBundle] = []
     @Published var error: String?
     var launchedWithProject = false
     private var pendingFiles: [URL] = []
+    /// A recording cut off last time, now back in this project.
+    @Published var recovered: ProjectBundle?
+    var recovery: Task<Void, Never>?
 
     var openEditor: EditorModel? {
         if case let .editor(editor) = screen { editor } else { nil }
     }
 
-    private init() { reloadProjects() }
+    private init() {
+        reloadProjects()
+        recovery = Task { await recoverInterruptedTakes() }
+    }
 
     func reloadProjects() { projects = ProjectBundle.list(adding: NSDocumentController.shared.recentDocumentURLs) }
 
@@ -143,6 +154,7 @@ final class AppModel: ObservableObject {
     }
 
     func open(_ bundle: ProjectBundle) {
+        guard !waitForRecovery({ self.open(bundle) }) else { return }
         switchScreen { [weak self] in self?.editorScreen(for: bundle) }
     }
 
@@ -161,7 +173,7 @@ final class AppModel: ObservableObject {
     // MARK: - Project files
 
     func openFiles(_ urls: [URL]) {
-        guard let url = urls.first else { return }
+        guard let url = urls.first, !waitForRecovery({ self.openFiles(urls) }) else { return }
         guard openWindow != nil else {
             pendingFiles = urls
             return

@@ -71,13 +71,15 @@ extension FrameRenderer {
 
     func background(style: FrameStyle, image: CIImage?, size: CGSize) -> CIImage {
         let rect = CGRect(origin: .zero, size: size)
-        if style.backgroundImage != nil, let image, image.extent.width > 0 {
+        if let name = style.backgroundImage, let image, image.extent.width > 0 {
             let e = image.extent
             let s = max(size.width / e.width, size.height / e.height)
-            return image.transformed(by: CGAffineTransform(translationX: -e.minX, y: -e.minY)
+            let placed = image.transformed(by: CGAffineTransform(translationX: -e.minX, y: -e.minY)
                 .concatenating(CGAffineTransform(scaleX: s, y: s))
                 .concatenating(CGAffineTransform(translationX: (size.width - e.width * s) / 2, y: (size.height - e.height * s) / 2)))
-                .clampedToExtent().cropped(to: rect)
+                .clampedToExtent()
+            guard style.backgroundBlur > 0.005 else { return placed.cropped(to: rect) }
+            return blurredBackground(placed, key: "\(name)|\(e)", amount: style.backgroundBlur, size: size)
         }
         let f = CIFilter.linearGradient()
         f.point0 = CGPoint(x: 0, y: size.height)

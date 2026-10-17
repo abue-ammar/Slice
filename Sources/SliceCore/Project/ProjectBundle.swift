@@ -157,7 +157,10 @@ public struct ProjectBundle {
         let keep = Set(project.clips.map(\.id.uuidString))
         let dir = url.appendingPathComponent("clips")
         for item in (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? [] where !keep.contains(item) {
-            try? FileManager.default.removeItem(at: dir.appendingPathComponent(item))
+            let folder = dir.appendingPathComponent(item)
+            // A take still recording, or one cut off that's put back next time Slice opens.
+            guard !hasRecordingNote(folder: folder) else { continue }
+            try? FileManager.default.removeItem(at: folder)
         }
     }
 

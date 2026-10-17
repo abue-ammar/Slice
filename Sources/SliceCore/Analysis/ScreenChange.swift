@@ -32,28 +32,36 @@ public enum ScreenChange {
 
     static func measure(video: URL, clicks: [(t: Double, point: CGPoint)], duration: Double,
                         progress: @escaping @Sendable (Double) -> Void) async -> [Result?] {
+        let last = max(duration - 0.02, 0)
+        var times: [Double] = []
+        for c in clicks { times += [max(c.t - before, 0), min(c.t + after, last)] }
+        let grids = await grids(video: video, times: times, progress: progress)
+        return clicks.enumerated().map { i, c in
+            guard let a = grids[key(times[2 * i])], let b = grids[key(times[2 * i + 1])] else { return nil }
+            return compare(a, b, at: c.point)
+        }
+    }
+
+    /// The grid at each of `times`, keyed by `key(_:)`.
+    static func grids(video: URL, times: [Double], progress: @escaping @Sendable (Double) -> Void = { _ in }) async -> [Int: [UInt8]] {
+        guard !times.isEmpty else { return [:] }
         let generator = AVAssetImageGenerator(asset: AVURLAsset(url: video))
         generator.maximumSize = CGSize(width: 384, height: 384)
         generator.appliesPreferredTrackTransform = true
         generator.requestedTimeToleranceBefore = CMTime(value: 1, timescale: 20)
         generator.requestedTimeToleranceAfter = CMTime(value: 1, timescale: 20)
-        let last = max(duration - 0.02, 0)
-        var times: [Double] = []
-        for c in clicks { times += [max(c.t - before, 0), min(c.t + after, last)] }
-        func key(_ t: Double) -> Int { Int((t * 1000).rounded()) }
         var grids: [Int: [UInt8]] = [:]
         var done = 0
         for await result in generator.images(for: times.map { CMTime(seconds: $0, preferredTimescale: 600) }) {
             if Task.isCancelled { break }
             if let image = try? result.image, let grid = luma(image) { grids[key(result.requestedTime.seconds)] = grid }
             done += 1
-            progress(Double(done) / Double(max(times.count, 1)))
+            progress(Double(done) / Double(times.count))
         }
-        return clicks.enumerated().map { i, c in
-            guard let a = grids[key(times[2 * i])], let b = grids[key(times[2 * i + 1])] else { return nil }
-            return compare(a, b, at: c.point)
-        }
+        return grids
     }
+
+    static func key(_ t: Double) -> Int { Int((t * 1000).rounded()) }
 
     static func luma(_ image: CGImage) -> [UInt8]? {
         var data = [UInt8](repeating: 0, count: columns * rows)
@@ -110,13 +118,26 @@ public enum ScreenChange {
 
     // MARK: - Comparing
 
+    struct Region {
+        var box: CGRect
+        var cells: Int
+    }
+
     static func compare(_ a: [UInt8], _ b: [UInt8], at point: CGPoint) -> Result {
+        let (fraction, regions) = changes(a, b)
+        guard !regions.isEmpty, fraction <= 0.4 else { return Result(fraction: fraction, local: nil) }
+        let area = around(point, in: regions)
+        return Result(fraction: fraction, local: area.flatMap { $0.width * $0.height <= 0.25 ? $0 : nil })
+    }
+
+    /// How much of the screen changed, and each connected patch of cells that did.
+    static func changes(_ a: [UInt8], _ b: [UInt8]) -> (fraction: Double, regions: [Region]) {
         let changed = zip(a, b).map { abs(Int($0) - Int($1)) > threshold }
         let total = changed.filter { $0 }.count
-        let fraction = Double(total) / Double(changed.count)
-        guard total > 0, fraction <= 0.4 else { return Result(fraction: fraction, local: nil) }
+        let fraction = Double(total) / Double(max(changed.count, 1))
+        guard total > 0, fraction <= 0.4 else { return (fraction, []) }
         var seen = [Bool](repeating: false, count: changed.count)
-        var regions: [(box: CGRect, cells: Int)] = []
+        var regions: [Region] = []
         for start in changed.indices where changed[start] && !seen[start] {
             var stack = [start]
             seen[start] = true
@@ -135,15 +156,20 @@ public enum ScreenChange {
             }
             let box = CGRect(x: Double(minX) / Double(columns), y: Double(minY) / Double(rows),
                              width: Double(maxX - minX + 1) / Double(columns), height: Double(maxY - minY + 1) / Double(rows))
-            regions.append((box, cells))
+            regions.append(Region(box: box, cells: cells))
         }
+        return (fraction, regions)
+    }
+
+    /// The patch nearest `point` (within reach of it), together with any patches touching it.
+    static func around(_ point: CGPoint, in regions: [Region]) -> CGRect? {
         func distance(_ r: CGRect) -> Double {
             hypot(max(r.minX - point.x, 0, point.x - r.maxX), max(r.minY - point.y, 0, point.y - r.maxY))
         }
         guard let nearest = regions.filter({ $0.cells > 2 || distance($0.box) == 0 }).min(by: { distance($0.box) < distance($1.box) }),
-              distance(nearest.box) < 0.3 else { return Result(fraction: fraction, local: nil) }
+              distance(nearest.box) < 0.3 else { return nil }
         var area = nearest.box
         for r in regions where r.box.intersects(area.insetBy(dx: -0.03, dy: -0.03)) { area = area.union(r.box) }
-        return Result(fraction: fraction, local: area.width * area.height <= 0.25 ? area : nil)
+        return area
     }
 }

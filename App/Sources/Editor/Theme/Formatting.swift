@@ -20,6 +20,11 @@ extension OutputAspect {
 
     var menuTitle: String { self == .auto ? "Auto (match recording)" : "\(name)  \(rawValue)" }
 
+    /// The shapes a batch export writes, one file each.
+    static let batchShapes: [OutputAspect] = [.landscape16x9, .portrait9x16, .square1x1]
+
+    var fileTag: String { rawValue.replacingOccurrences(of: ":", with: "x") }
+
     var symbol: String {
         switch self {
         case .auto: "aspectratio"

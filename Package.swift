@@ -19,7 +19,7 @@ let package = Package(
         .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.17.7", traits: []),
     ],
     targets: [
-        .target(name: "SliceCore", dependencies: [.product(name: "FluidAudio", package: "FluidAudio")], resources: [.copy("Resources/Shaders/ClickRipple.metal.txt"), .copy("Resources/Shaders/LiquidGlass.metal.txt"), .copy("Resources/Shaders/DeviceFrame.metal.txt"), .copy("Resources/Shaders/ZoomBlur.metal.txt"), .copy("Resources/Shaders/CameraBlur.metal.txt"), .copy("Resources/Shaders/ScreenTilt.metal.txt"), .copy("Resources/Shaders/Transitions.metal.txt"), .copy("Resources/Cursors"), .copy("Resources/Sounds"), .copy("Resources/Models")]),
+        .target(name: "SliceCore", dependencies: [.product(name: "FluidAudio", package: "FluidAudio")], resources: [.copy("Resources/Shaders/ClickRipple.metal.txt"), .copy("Resources/Shaders/ClickSpotlight.metal.txt"), .copy("Resources/Shaders/LiquidGlass.metal.txt"), .copy("Resources/Shaders/DeviceFrame.metal.txt"), .copy("Resources/Shaders/ZoomBlur.metal.txt"), .copy("Resources/Shaders/CursorTrail.metal.txt"), .copy("Resources/Shaders/CameraBlur.metal.txt"), .copy("Resources/Shaders/ScreenTilt.metal.txt"), .copy("Resources/Shaders/Transitions.metal.txt"), .copy("Resources/Cursors"), .copy("Resources/Sounds"), .copy("Resources/Models")]),
         .testTarget(name: "SliceCoreTests", dependencies: ["SliceCore"]),
     ],
     swiftLanguageModes: [.v5]

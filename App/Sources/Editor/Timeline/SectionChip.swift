@@ -44,12 +44,24 @@ struct SectionChip: View {
                                  startPoint: .top, endPoint: .bottom))
             .overlay { ticks(start: start, length: length).clipShape(shape) }
             .overlay {
-                ClipWaveformView(audio: audio, sourceStart: segment.sourceStart + (leading ? delta : 0), pps: pps,
-                                 strength: dimmed && !trimming ? 0.5 : 1)
-                    .clipShape(shape)
+                if !segment.isSpedUp {
+                    ClipWaveformView(audio: audio, sourceStart: segment.sourceStart + (leading ? delta : 0), pps: pps,
+                                     strength: dimmed && !trimming ? 0.5 : 1)
+                        .clipShape(shape)
+                }
             }
             .overlay(alignment: .bottomLeading) {
-                if audio.isEmpty && width > 40 {
+                if segment.isSpedUp && width > 40 {
+                    HStack(spacing: 3) {
+                        Image(systemName: "hare.fill")
+                        if width <= 70 { Text(SpeedRange.label(segment.speed)) }
+                    }
+                    .font(.rounded(9, .semibold))
+                    .foregroundStyle(.white.opacity(dimmed && !trimming ? 0.3 : 0.6))
+                    .padding(.leading, 10)
+                    .padding(.bottom, 5)
+                    .allowsHitTesting(false)
+                } else if audio.isEmpty && width > 40 {
                     Image(systemName: "speaker.slash.fill")
                         .font(.system(size: 8, weight: .semibold))
                         .foregroundStyle(.white.opacity(dimmed && !trimming ? 0.2 : 0.4))
@@ -64,7 +76,7 @@ struct SectionChip: View {
                 if width > 70 {
                     VStack(spacing: 0) {
                         Text(label).font(.system(size: 10, weight: .semibold)).foregroundStyle(.white.opacity(0.55))
-                        Text(CutPin.label(length, precise: trimming))
+                        Text((segment.isSpedUp ? SpeedRange.label(segment.speed) + " · " : "") + CutPin.label(length, precise: trimming))
                             .font(.rounded(12).monospacedDigit())
                             .foregroundStyle(.white)
                             .contentTransition(.numericText(value: length))
@@ -110,10 +122,11 @@ struct SectionChip: View {
             if snap, let target = snapTarget { dt = target - edge }
             if snap, !snapped { NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now) }
             snapped = snap
+            let speed = segment.speed
             if leading {
-                dt = min(max(dt, -segment.sourceStart), segment.duration - 0.1)
+                dt = min(max(dt, -segment.sourceStart / speed), segment.duration - 0.1 / speed)
             } else {
-                dt = max(min(dt, clipDuration - segment.sourceEnd), -(segment.duration - 0.1))
+                dt = max(min(dt, (clipDuration - segment.sourceEnd) / speed), -(segment.duration - 0.1 / speed))
             }
             drag = TrimDrag(segment: segment, leading: leading, delta: dt)
             if leading, dt > 0 { preview(edge + dt) }
@@ -124,7 +137,8 @@ struct SectionChip: View {
             snapped = false
             snapTarget = nil
             guard abs(d.delta) > 0.01 else { return }
-            if leading { trim(segment.sourceStart + d.delta, nil) } else { trim(nil, segment.sourceEnd + d.delta) }
+            let source = d.delta * segment.speed
+            if leading { trim(segment.sourceStart + source, nil) } else { trim(nil, segment.sourceEnd + source) }
             preview(leading ? segment.editedStart : segment.editedEnd + d.delta)
         }
         .help(leading ? "Drag to trim the start" : "Drag to trim the end")

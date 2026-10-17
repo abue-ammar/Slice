@@ -117,10 +117,14 @@ struct CursorArtwork {
 
 final class CursorSprite {
     let image: CIImage
+    /// The same pixels left in sRGB for the trail kernel, which samples them as a plain transform would and only then
+    /// converts: converting first blends the edges in linear light, a slightly lighter outline.
+    let encoded: CIImage
     let hotspot: CGPoint
 
-    init(image: CIImage, hotspot: CGPoint) {
-        self.image = image
+    init(cgImage: CGImage, hotspot: CGPoint) {
+        image = CIImage(cgImage: cgImage)
+        encoded = CIImage(cgImage: cgImage, options: [.colorSpace: NSNull()])
         self.hotspot = hotspot
     }
 
@@ -131,7 +135,7 @@ final class CursorSprite {
 
     static func render(_ art: CursorArtwork, scale: CGFloat) -> CursorSprite? {
         guard let (cg, hotspot) = art.rasterised(scale: scale) else { return nil }
-        return CursorSprite(image: CIImage(cgImage: cg), hotspot: CGPoint(x: hotspot.x, y: CGFloat(cg.height) - hotspot.y))
+        return CursorSprite(cgImage: cg, hotspot: CGPoint(x: hotspot.x, y: CGFloat(cg.height) - hotspot.y))
     }
 }
 

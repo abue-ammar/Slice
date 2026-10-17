@@ -40,7 +40,10 @@ extension EditorModel {
         }
         p.cameraBlocks = p.cameraBlocks.compactMap { b in shift(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
         p.zoomBlocks = p.zoomBlocks.compactMap { b in shift(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
+        p.redactions = p.redactions.compactMap { b in shift(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
+        p.spotlights = p.spotlights.compactMap { b in shift(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
         p.cuts.removeAll { $0.clipID == id }
+        p.speeds.removeAll { $0.clipID == id }
         p.clips.remove(at: i)
         project = p
         saveNow()
@@ -50,6 +53,7 @@ extension EditorModel {
         stopExport()
         cancelTranscription()
         cancelSmartZoom()
+        cancelSensitiveTextScan()
         cancelVoice()
         cleanUpVoices()
         pause()
@@ -62,13 +66,46 @@ extension EditorModel {
     // MARK: - Export
 
     func startExport(to url: URL) {
-        guard exportJob?.isRunning != true else { return }
+        startExport([(url, project.export.aspect)])
+    }
+
+    /// One file per shape (16:9, 9:16 and 1:1) into `folder`, named after the project and the shape.
+    func startBatchExport(in folder: URL) {
+        let ext = project.export.format.fileExtension
+        var taken = Set<URL>()
+        let items = OutputAspect.batchShapes.map { aspect in
+            let url = Self.freeURL(in: folder, name: "\(project.name) \(aspect.fileTag)", ext: ext, taken: taken)
+            taken.insert(url)
+            return (url: url, aspect: aspect)
+        }
+        startExport(items)
+    }
+
+    private func startExport(_ items: [(url: URL, aspect: OutputAspect)]) {
+        guard exportJob?.isRunning != true, let first = items.first else { return }
         pause()
-        let size = project.renderSize, settings = project.export
-        let job = ExportJob(url: url, size: size, fps: settings.fps, hevc: settings.hevc,
-                            bitRate: settings.bitRate(for: size), duration: project.duration)
+        let p = exporting(first.aspect), settings = p.export
+        let job = ExportJob(url: first.url, format: settings.format, size: p.exportSize, fps: settings.outputFPS, hevc: settings.hevc,
+                            bitRate: p.exportBitRate, duration: p.duration, outputs: items.map(\.url),
+                            shape: items.count > 1 ? first.aspect : nil,
+                            byteLimit: settings.format == .video ? p.exportByteLimit : nil)
         exportJob = job
-        exportTask = Task { [weak self] in await self?.runExport(to: url, job: job.id) }
+        exportTask = Task { [weak self] in await self?.runExport(items, job: job.id) }
+    }
+
+    private func exporting(_ aspect: OutputAspect) -> Project {
+        var p = project
+        p.export.aspect = aspect
+        return p
+    }
+
+    static func freeURL(in folder: URL, name: String, ext: String, taken: Set<URL>) -> URL {
+        var n = 1
+        while true {
+            let url = folder.appendingPathComponent(n == 1 ? name : "\(name) \(n)").appendingPathExtension(ext)
+            if !taken.contains(url), !FileManager.default.fileExists(atPath: url.path) { return url }
+            n += 1
+        }
     }
 
     func stopExport() {
@@ -82,7 +119,7 @@ extension EditorModel {
         exportJob = nil
     }
 
-    func runExport(to url: URL, job id: UUID) async {
+    func runExport(_ items: [(url: URL, aspect: OutputAspect)], job id: UUID) async {
         scanCameraGlitches()
         scanHoverMoments()
         scanSpeech()
@@ -91,22 +128,35 @@ extension EditorModel {
         await speechScan?.value
         guard !Task.isCancelled else { return }
         saveNow()
-        let throttle = ProgressThrottle()
         do {
             try await prepareVoiceForExport { [weak self] p in
                 self?.update(id) { $0.note = "Enhancing voice… \(Int((p * 100).rounded(.down)))%" }
             }
             update(id) { $0.note = nil }
-            try await Exporter.export(project: project, bundle: bundle, cursor: cursorTrack, captions: captions, to: url) { p in
-                guard throttle.shouldReport(p) else { return }
-                Task { @MainActor [weak self] in self?.exportProgressed(p, job: id) }
+            var bytes: Int64 = 0
+            for (step, item) in items.enumerated() {
+                let p = exporting(item.aspect)
+                update(id) { job in
+                    job.step = step
+                    job.url = item.url
+                    job.size = p.exportSize
+                    job.bitRate = p.exportBitRate
+                    if items.count > 1 { job.shape = item.aspect }
+                }
+                let throttle = ProgressThrottle()
+                let count = Double(items.count)
+                try await Exporter.export(project: p, bundle: bundle, cursor: cursorTrack, captions: captions, to: item.url) { v in
+                    let overall = (Double(step) + v) / count
+                    guard throttle.shouldReport(overall) else { return }
+                    Task { @MainActor [weak self] in self?.exportProgressed(overall, job: id) }
+                }
+                try Task.checkCancellation()
+                bytes += Int64((try? item.url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
             }
-            try Task.checkCancellation()
-            let bytes = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init)
             update(id) { $0.progress = 1; $0.phase = .done(bytes: bytes) }
         } catch {
             if Task.isCancelled || error is CancellationError {
-                try? FileManager.default.removeItem(at: url)
+                for item in items { try? FileManager.default.removeItem(at: item.url) }
                 return
             }
             update(id) { $0.phase = .failed(error.localizedDescription) }

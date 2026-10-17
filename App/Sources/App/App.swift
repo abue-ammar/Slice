@@ -123,6 +123,16 @@ struct RootView: View {
                     .id(ObjectIdentifier(editor))
             }
         }
+        .alert("Recording recovered", isPresented: Binding(get: { model.recovered != nil }, set: { if !$0 { model.recovered = nil } })) {
+            Button("Open") {
+                if let bundle = model.recovered { model.open(bundle) }
+                model.recovered = nil
+            }
+            Button("Not Now", role: .cancel) { model.recovered = nil }
+        } message: {
+            Text("Slice stopped while “\(model.recovered?.displayName ?? "")” was recording. The take is back in the project, "
+                + "up to the last couple of seconds before it stopped.")
+        }
         .overlay {
             Theme.window
                 .opacity(model.covered ? 1 : 0)

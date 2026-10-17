@@ -37,6 +37,7 @@ public final class FrameRenderer: @unchecked Sendable {
         let out = scene.output
         let extent = CGRect(origin: .zero, size: out)
         let style = scene.project.style
+        let screen = screen.map { spotlit(redacted($0, blocks: scene.project.redactions(at: t)), scene: scene, time: t) }
         let backdrop = options.clearBackground ? CIImage(color: .clear).cropped(to: extent)
             : backdrop(scene: scene, time: t, options: options)
         var image = backdrop
@@ -139,6 +140,11 @@ public final class FrameRenderer: @unchecked Sendable {
     let lensShadows = NSCache<NSString, CIImage>()
     let captionLayouts = NSCache<NSString, CaptionLayout>()
     let keycapCache = NSCache<NSString, CIImage>()
+    let backgroundBlurs: NSCache<NSString, CIImage> = {
+        let cache = NSCache<NSString, CIImage>()
+        cache.countLimit = 4
+        return cache
+    }()
 
     let segmentationLock = NSLock()
     var segmentation: [VNGeneratePersonSegmentationRequest.QualityLevel: [VNGeneratePersonSegmentationRequest]] = [:]

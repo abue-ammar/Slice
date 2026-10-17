@@ -44,6 +44,14 @@ struct TimelineView: View {
                     editor.addZoomBlock(at: editor.time)
                 }
                 .frame(height: rowHeight)
+                GutterButton(symbol: "eye.slash", hoverSymbol: "plus", help: "Blur part of the screen at the playhead") {
+                    editor.addRedaction(at: editor.time)
+                }
+                .frame(height: rowHeight)
+                GutterButton(symbol: SpotlightLane.symbol, hoverSymbol: "plus", help: "Add a spotlight at the playhead") {
+                    editor.addSpotlight(at: editor.time)
+                }
+                .frame(height: rowHeight)
                 if editor.shows3DTrack {
                     GutterButton(symbol: "cube", hoverSymbol: "plus", help: "Add a 3D keyframe at the playhead") {
                         withAnimation(Theme.hover) { editor.addKeyframe(at: editor.time) }
@@ -102,6 +110,12 @@ struct TimelineView: View {
                                         }
                                     }
                                 }
+                            }
+                            track(.blur, pps: pps, empty: editor.project.redactions.isEmpty) {
+                                RedactLaneContent(editor: editor, pps: pps, height: rowHeight)
+                            }
+                            track(.spotlight, pps: pps, empty: editor.project.spotlights.isEmpty) {
+                                SpotlightLane(editor: editor, pps: pps, height: rowHeight)
                             }
                             if editor.shows3DTrack {
                                 KeyframeLane(editor: editor, pps: pps, height: rowHeight)

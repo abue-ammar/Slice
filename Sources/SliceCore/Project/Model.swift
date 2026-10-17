@@ -31,6 +31,9 @@ public struct Project: Codable, Equatable {
     public var autoZoom: AutoZoomSettings
     public var transitions: [ClipTransition]
     public var device3D: Device3DSettings
+    public var speeds: [SpeedRange]
+    public var redactions: [RedactBlock]
+    public var spotlights: [SpotlightBlock]
 
     public init(name: String, createdAt: Date = Date()) {
         self.name = name
@@ -54,6 +57,9 @@ public struct Project: Codable, Equatable {
         autoZoom = AutoZoomSettings()
         transitions = []
         device3D = Device3DSettings()
+        speeds = []
+        redactions = []
+        spotlights = []
     }
 
     /// Missing keys fall back to defaults, so older projects still open.
@@ -82,6 +88,9 @@ public struct Project: Codable, Equatable {
         autoZoom = try c.decodeIfPresent(AutoZoomSettings.self, forKey: .autoZoom) ?? d.autoZoom
         transitions = try c.decodeIfPresent([ClipTransition].self, forKey: .transitions) ?? []
         device3D = try c.decodeIfPresent(Device3DSettings.self, forKey: .device3D) ?? d.device3D
+        speeds = try c.decodeIfPresent([SpeedRange].self, forKey: .speeds) ?? []
+        redactions = try c.decodeIfPresent([RedactBlock].self, forKey: .redactions) ?? []
+        spotlights = try c.decodeIfPresent([SpotlightBlock].self, forKey: .spotlights) ?? []
     }
 
     public var hasCamera: Bool { clips.contains { $0.cameraFile != nil } }

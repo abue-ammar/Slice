@@ -28,7 +28,7 @@ public struct AutoZoomSettings: Codable, Equatable {
 
 public enum SmartZoom {
     public struct Moment: Equatable, Sendable {
-        public enum Kind: String, Sendable { case click, pause }
+        public enum Kind: String, Sendable { case click, pause, typing }
         public var kind: Kind
         public var t: Double
         public var end: Double
@@ -37,6 +37,10 @@ public enum SmartZoom {
         public var response: CGRect?
         public var pageChange = false
         public var typing = false
+        /// When typing after this moment began.
+        public var typingStart: Double?
+        /// Where the typed text showed up on screen.
+        public var typed: CGRect?
     }
 
     public struct Detection: Equatable, Sendable {
@@ -70,6 +74,9 @@ public enum SmartZoom {
                     duration: clip.duration) { p in progress((Double(k) + p) / Double(todo.count)) }
                 for (i, change) in zip(missing, changes) { if let change { apply(change, to: &detection.moments[i]) } }
             }
+            await measureTyping(&detection, video: bundle.file(clip.screenFile), duration: clip.duration) { p in
+                progress((Double(k) + p) / Double(todo.count))
+            }
             out[clip.id] = detection
             progress(Double(k + 1) / Double(todo.count))
         }
@@ -84,7 +91,7 @@ public enum SmartZoom {
     static func interactions(log: CursorLog, pointSize: CGSize, duration: Double) -> Detection {
         let samples = log.samples.filter { $0.t.isFinite && $0.x.isFinite && $0.y.isFinite }.sorted { $0.t < $1.t }
         let scrolls = bursts(log.scrolls.map(\.t).filter { $0 >= 0 && $0 <= duration }.sorted(), gap: 0.5, tail: 0.3)
-        let typing = bursts(log.typing.filter { $0 >= 0 && $0 <= duration }.sorted(), gap: 1.2, tail: 0.2)
+        let typing = bursts(log.typing.filter { $0 >= 0 && $0 <= duration }.sorted(), gap: 1.2, tail: typingTail)
         guard samples.count > 1, duration > 0 else { return Detection(moments: [], scrolls: scrolls) }
 
         let rate = 60.0
@@ -131,9 +138,20 @@ public enum SmartZoom {
             if c.double { m.score += 0.05 }
             if let burst = typing.first(where: { $0.start > c.t + 0.03 && $0.start < c.t + 2.5 }) {
                 m.typing = true
+                m.typingStart = burst.start
                 m.end = burst.end
                 m.score += 0.3
             }
+            moments.append(m)
+        }
+        for burst in typing where burst.end - burst.start >= minLoneTyping
+            && !moments.contains(where: { $0.typingStart == burst.start }) {
+            let length = burst.end - burst.start
+            var m = Moment(kind: .typing, t: burst.start, end: burst.end, point: path[index(burst.start)],
+                           score: 0.45 + 0.1 * min((length - minLoneTyping) / 2, 1))
+            m.typing = true
+            m.typingStart = burst.start
+            if overlaps(scrolls, burst.start, burst.end) { m.score -= 0.2 }
             moments.append(m)
         }
 
@@ -158,6 +176,8 @@ public enum SmartZoom {
         }
         return Detection(moments: moments.sorted { $0.t < $1.t }, scrolls: scrolls)
     }
+
+    static let typingTail = 0.2
 
     static func bursts(_ times: [Double], gap: Double, tail: Double) -> [TimeSpan] {
         var out: [TimeSpan] = []
@@ -248,6 +268,12 @@ public enum SmartZoom {
                 var block = ZoomBlock(start: start, end: end, scale: min(limit, fit(frame, g)),
                                       focus: CGPoint(x: frame.midX, y: frame.midY), isAuto: true)
                 block.easing = .smooth
+                let typed = chunk.compactMap(\.m.typed).reduce(CGRect.null) { $0.union($1) }
+                if !typed.isNull, block.scale < max(minScale, limit * 0.75), let pan = follow(typed, limit: limit, g) {
+                    block.scale = pan.scale
+                    block.focus = pan.from
+                    block.endFocus = pan.to
+                }
                 planned.append((block, first.t ... max(last.end, first.t)))
                 start = end
             }
@@ -279,6 +305,7 @@ public enum SmartZoom {
         for m in moments {
             r = r.union(CGRect(origin: m.point, size: .zero))
             if let resp = m.response { r = r.union(resp) }
+            if let typed = m.typed { r = r.union(typed) }
         }
         r = r.insetBy(dx: -margin, dy: -margin)
         let w = max(r.width, 0.12), h = max(r.height, 0.12)

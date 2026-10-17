@@ -65,6 +65,13 @@ struct BackgroundSection: View {
                     }
                 }
                 .animation(Theme.swap, value: tab)
+                if style.backgroundImage != nil, tab != .gradient {
+                    PanelSlider("Blur", value: $editor.project.style.backgroundBlur, in: 0 ... 1, default: 0) {
+                        $0 < 0.005 ? "None" : percent($0, of: 0 ... 1)
+                    }
+                    .help("Softens the background image so the screen stands out")
+                    .transition(.opacity)
+                }
             }
 
             PanelDivider()
@@ -106,8 +113,13 @@ struct BackgroundSection: View {
             PanelDivider()
 
             SmartZoomSection(editor: editor)
+
+            PanelDivider()
+
+            SpeedUpSection(editor: editor)
         }
         .animation(.snappy, value: style.padding < 0.0005)
+        .animation(Theme.swap, value: style.backgroundImage != nil && tab != .gradient)
         .animation(.snappy, value: style.motionBlur)
         .onAppear { library = BackgroundLibrary.list() }
     }

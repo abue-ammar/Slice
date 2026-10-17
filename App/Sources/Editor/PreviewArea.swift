@@ -63,6 +63,9 @@ struct PreviewHeader: View {
         case .music: "Drag to move the music, its edges to trim. Delete removes it."
         case .transition: "Drag its edges to change the length. Delete removes it."
         case .keyframe: "Pose the phone in the preview. Drag the keyframe to retime it. Delete removes it."
+        case .redact: "Drag the box over what to hide. Delete removes it."
+        case .spotlight: editor.selectedSpotlight?.followsPointer == true ? "The spotlight follows the pointer. Delete removes it."
+            : "Drag the circle onto what to light, its edge to resize. Delete removes it."
         case nil: editor.wordSelection != nil ? "Delete cuts the selected words. ⌘Z undoes."
             : editor.handlesPhoneInPreview(tab: inspectorTab) ? Device3DPoseOverlay.hint
             : "Double-click a track to add a block. Space plays."
@@ -85,6 +88,12 @@ struct PreviewArea: View {
                 GeometryReader { geo in
                     if editor.handlesPhoneInPreview(tab: inspectorTab) {
                         Device3DPoseOverlay(editor: editor)
+                    }
+                    if editor.isEditingRedaction, let block = editor.selectedRedaction {
+                        RedactBoxOverlay(editor: editor, block: block, viewSize: geo.size)
+                    }
+                    if editor.isEditingSpotlight, let block = editor.selectedSpotlight {
+                        SpotlightOverlay(editor: editor, block: block, viewSize: geo.size)
                     }
                     if editor.isEditingZoomFocus, case let .zoom(id) = editor.selection,
                        let block = editor.project.zoomBlocks.first(where: { $0.id == id }) {

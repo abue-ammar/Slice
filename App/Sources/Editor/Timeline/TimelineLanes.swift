@@ -24,6 +24,8 @@ extension EditorModel.TimelineLane {
         switch self {
         case .camera: Theme.camera
         case .zoom: Theme.zoom
+        case .blur: Theme.privacy
+        case .spotlight: Theme.spotlight
         case .music: Theme.music
         }
     }
@@ -32,6 +34,8 @@ extension EditorModel.TimelineLane {
         switch self {
         case .camera: "Click to change the camera layout from here"
         case .zoom: "Click to zoom in here"
+        case .blur: "Click to blur part of the screen"
+        case .spotlight: "Click to spotlight part of the screen"
         case .music: "Click to add background music"
         }
     }
@@ -40,6 +44,8 @@ extension EditorModel.TimelineLane {
         switch self {
         case .camera: "Add a camera layout here"
         case .zoom: "Add a zoom here"
+        case .blur: "Blur or pixelate part of the screen here"
+        case .spotlight: "Keep part of the screen in focus here"
         case .music: "Add music here"
         }
     }
@@ -48,6 +54,13 @@ extension EditorModel.TimelineLane {
 @Observable
 final class LaneHover {
     var x: CGFloat?
+    var reserved: CGFloat = 0
+}
+
+/// Leading width a lane's content keeps for itself (e.g. the Find sensitive text pill), so the hover ghost stays clear of it.
+struct LaneReservedWidth: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
 struct LaneTrack<Content: View>: View {
@@ -81,6 +94,7 @@ struct LaneTrack<Content: View>: View {
         .frame(height: height)
         .help(lane.help)
         .animation(Theme.hover, value: empty)
+        .onPreferenceChange(LaneReservedWidth.self) { hover.reserved = $0 }
         .onContinuousHover { phase in
             switch phase {
             case let .active(p): hover.x = p.x
@@ -99,7 +113,7 @@ struct LaneGhost: View {
     @State private var last: ClosedRange<Double>?
 
     var body: some View {
-        let range = hover.x.flatMap { propose($0 / pps) }
+        let range = hover.x.flatMap { x in propose(x / pps).flatMap { $0.lowerBound * pps < hover.reserved ? nil : $0 } }
         let shown = range ?? last
         let shape = RoundedRectangle(cornerRadius: 10, style: .continuous)
         Group {

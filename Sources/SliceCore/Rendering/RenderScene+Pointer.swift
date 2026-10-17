@@ -22,7 +22,7 @@ extension RenderScene {
         guard clip.hasEditableCursor, let path = cursor.motion.path(for: clip.id), !path.isEmpty else { return nil }
         let smooth = settings.smoothing > 0
         let start = seg.sourceStart
-        let local = start + min(max(t - seg.editedStart, 0), seg.duration)
+        let local = seg.local(at: t)
         let points = clip.captureRect.size
         let glideFrom = joinStart(before: si, smooth: smooth)
         let loop = settings.loopPosition ? loopTarget(for: clip, smooth: smooth) : nil
@@ -35,7 +35,7 @@ extension RenderScene {
                 let e = smoothstep((l - start) / Self.joinGlide)
                 p = CGPoint(x: lerp(from.x, p.x, e), y: lerp(from.y, p.y, e))
             }
-            let left = project.duration - (seg.editedStart + l - start)
+            let left = project.duration - seg.edited(local: l)
             if let to = loop, loopGlide > 0, left < loopGlide {
                 let e = smoothstep(1 - left / loopGlide)
                 p = CGPoint(x: lerp(p.x, to.x, e), y: lerp(p.y, to.y, e))
@@ -72,11 +72,11 @@ extension RenderScene {
             pointer.previousType = previous
             pointer.fade = smoothstep((local - state.since) / Self.typeFade)
         }
-        let shutter = min(settings.blurShutter, local - start)
+        let shutter = min(settings.blurShutter * seg.speed, local - start)
         if shutter > 0 {
             let content = geometry(at: t).contentRect
             func onScreen(_ age: Double) -> CGPoint {
-                let v = view(at: project.style.motionBlur ? t - age : t)
+                let v = view(at: project.style.motionBlur ? t - age / seg.speed : t)
                 let k = output.width / v.width
                 let p = position(local - age)
                 return CGPoint(x: (content.minX + p.x * content.width - v.minX) * k,

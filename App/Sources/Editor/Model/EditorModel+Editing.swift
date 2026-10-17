@@ -22,7 +22,8 @@ extension EditorModel {
             }.value
             guard let self, !Task.isCancelled, Self.footage(self.project.clips) == Self.footage(snapshot.clips),
                   self.project.clips.map(\.hoverMoments) == snapshot.clips.map(\.hoverMoments),
-                  self.project.cuts == snapshot.cuts, self.project.cursor.smoothing == snapshot.cursor.smoothing
+                  self.project.cuts == snapshot.cuts, self.project.speeds == snapshot.speeds,
+                  self.project.cursor.smoothing == snapshot.cursor.smoothing
             else { return }
             self.cursorTrack = track
             self.renderState.update(project: self.project, cursor: track)
@@ -65,7 +66,7 @@ extension EditorModel {
         // transcript: none of that changes what the player plays, so it never rebuilds it.
         let clipsChanged = old.clips != project.clips
         let footageChanged = clipsChanged && Self.footage(old.clips) != Self.footage(project.clips)
-        let editChanged = footageChanged || old.cuts != project.cuts
+        let editChanged = footageChanged || old.cuts != project.cuts || old.speeds != project.speeds
         if editChanged || old.subtitles != project.subtitles
             || (clipsChanged && old.clips.map(\.transcriptFile) != project.clips.map(\.transcriptFile)) {
             refreshWordsAndCaptions()

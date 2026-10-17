@@ -47,6 +47,9 @@ final class Recorder: NSObject, @unchecked Sendable {
     var observers: [NSObjectProtocol] = []
     /// Whether each take's mic heard only silence, measured while it recorded.
     var micSilence: [UUID: Bool] = [:]
+    var cursorSaver: Timer?
+    var savingCursor = false
+    let cursorQueue = DispatchQueue(label: "recorder.cursor", qos: .utility)
 
     init(settings: Settings, bundle: ProjectBundle) {
         self.settings = settings
@@ -158,6 +161,7 @@ final class Recorder: NSObject, @unchecked Sendable {
         deviceLostAt = device != nil && deviceStreamMissing ? Date() : nil
         cursor.start(globalRect: target.rect, mapping: device?.mapping,
                      keys: settings.keys && device == nil, deviceWindowsInPicture: resolved != nil, analysis: writer.analysis)
+        keepRecoverable(writer, captureRect: target.rect)
     }
 
     func endTake() async -> Clip? {
@@ -171,8 +175,12 @@ final class Recorder: NSObject, @unchecked Sendable {
         if deviceLostAt != nil { deviceDropped = true }
         deviceLostAt = nil
         guard let writer, let target else { return nil }
-        let clip = await writer.finish(at: stopTime, captureRect: target.rect, cursor: log)
+        await stopSavingCursor()
+        var clip = await writer.finish(at: stopTime, captureRect: target.rect, cursor: log)
+        // A file that failed to finish still plays up to its last fragment.
+        if clip == nil, writer.startTime != nil { clip = await bundle.recoverTake(writer.planned(captureRect: target.rect)) }
         if let clip, let silent = writer.micSilent { micSilence[clip.id] = silent }
+        if clip == nil { bundle.clearRecordingNote(writer.id) }
         return clip
     }
 

@@ -1,0 +1,29 @@
+//
+//  ClickSpotlight.metal.txt
+//  SliceCore
+//
+//  Created by rit3zh CX on 10/17/26.
+//
+
+#include <CoreImage/CoreImage.h>
+using namespace metal;
+
+// Quietens the screen around a click: outside a soft circle the picture eases to `quiet` (the same picture for dim,
+// a blurred copy for blur) by `blend`, then is shaded by `shade`. Inside `inner` it's untouched; between `inner` and
+// `outer` it feathers with a smootherstep, so the edge has no visible ring. Distances are in the screen's pixels.
+//
+// Kept as .txt and compiled at runtime by CIKernel.kernels(withMetalString:), like the other Core Image kernels.
+[[ stitchable ]] float4 clickSpotlight(coreimage::sampler src, coreimage::sampler quiet, float2 center, float inner,
+                                       float outer, float blend, float shade, coreimage::destination dest) {
+    float2 p = dest.coord();
+    float4 color = src.sample(src.transform(p));
+    float x = clamp((distance(p, center) - inner) / max(outer - inner, 1.0), 0.0, 1.0);
+    float m = x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
+    if (m <= 0.0) return color;
+    float4 q = quiet.sample(quiet.transform(p));
+    // The blurred copy's edges smear into transparent pixels; keep the picture's own alpha.
+    q = q.a > 0.0001 ? float4(q.rgb / q.a * color.a, color.a) : color;
+    float4 out = mix(color, q, blend);
+    out.rgb *= 1.0 - shade;
+    return mix(color, out, m);
+}

@@ -19,6 +19,8 @@ public struct FrameStyle: Codable, Equatable {
     public var backgroundTop = RGBA(0.36, 0.30, 0.85)
     public var backgroundBottom = RGBA(0.92, 0.45, 0.62)
     public var backgroundImage: String?
+    /// How much a background image is blurred, 0…1. Gradients are smooth already, so it only applies to images.
+    public var backgroundBlur = 0.0
     public var padding = 0.06
     public var screenCornerRadius = 0.018
     public var shadow = 0.5
@@ -50,6 +52,7 @@ public struct FrameStyle: Codable, Equatable {
         backgroundTop = try c.decodeIfPresent(RGBA.self, forKey: .backgroundTop) ?? d.backgroundTop
         backgroundBottom = try c.decodeIfPresent(RGBA.self, forKey: .backgroundBottom) ?? d.backgroundBottom
         backgroundImage = try c.decodeIfPresent(String.self, forKey: .backgroundImage)
+        backgroundBlur = try c.decodeIfPresent(Double.self, forKey: .backgroundBlur) ?? d.backgroundBlur
         padding = try c.decodeIfPresent(Double.self, forKey: .padding) ?? d.padding
         if try c.decodeIfPresent(Bool.self, forKey: .legacyFullScreen) == true { padding = 0 }
         screenCornerRadius = try c.decodeIfPresent(Double.self, forKey: .screenCornerRadius) ?? d.screenCornerRadius
@@ -66,7 +69,7 @@ public struct FrameStyle: Codable, Equatable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case backgroundTop, backgroundBottom, backgroundImage, padding, screenCornerRadius, shadow, cameraCornerRadius,
+        case backgroundTop, backgroundBottom, backgroundImage, backgroundBlur, padding, screenCornerRadius, shadow, cameraCornerRadius,
              mirrorCamera, cameraBackgroundBlur, motionBlur, motionBlurAmount, transitionDuration, cameraZoomScale,
              zoomTransitionDuration, screenBorder
         case legacyFullScreen = "fullScreen"
@@ -77,6 +80,7 @@ public struct FrameStyle: Codable, Equatable {
         try c.encode(backgroundTop, forKey: .backgroundTop)
         try c.encode(backgroundBottom, forKey: .backgroundBottom)
         try c.encodeIfPresent(backgroundImage, forKey: .backgroundImage)
+        try c.encode(backgroundBlur, forKey: .backgroundBlur)
         try c.encode(padding, forKey: .padding)
         try c.encode(screenCornerRadius, forKey: .screenCornerRadius)
         try c.encode(shadow, forKey: .shadow)
@@ -145,23 +149,63 @@ public enum ExportQuality: String, Codable, CaseIterable {
     }
 }
 
+public enum ExportFormat: String, Codable, CaseIterable {
+    case video, gif
+
+    public var label: String {
+        switch self {
+        case .video: "Video"
+        case .gif: "GIF"
+        }
+    }
+
+    public var fileExtension: String { self == .gif ? "gif" : "mp4" }
+}
+
+/// A GIF's longer side, in pixels.
+public enum GIFSize: Int, Codable, CaseIterable {
+    case small = 640, medium = 960, large = 1280
+
+    public var label: String {
+        switch self {
+        case .small: "Small"
+        case .medium: "Medium"
+        case .large: "Large"
+        }
+    }
+}
+
 public struct ExportSettings: Codable, Equatable {
+    public static let gifFrameRates = [15, 20, 30]
+
+    public var format: ExportFormat = .video
     public var aspect: OutputAspect = .auto
     public var resolution: OutputResolution = .p2160
     public var fps = 60
     public var hevc = true
     public var quality: ExportQuality = .high
+    public var gifSize: GIFSize = .medium
+    public var gifFPS = 20
+    /// Keeps a video under this many megabytes: the bitrate comes from its length, and the resolution drops if needed.
+    public var sizeLimitMB: Int?
 
     public init() {}
+
+    /// Frames per second actually written: GIFs have their own, lower rate.
+    public var outputFPS: Int { format == .gif ? gifFPS : fps }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = ExportSettings()
+        format = (try? c.decodeIfPresent(ExportFormat.self, forKey: .format)) ?? d.format
         aspect = try c.decodeIfPresent(OutputAspect.self, forKey: .aspect) ?? d.aspect
         resolution = try c.decodeIfPresent(OutputResolution.self, forKey: .resolution) ?? d.resolution
         fps = try c.decodeIfPresent(Int.self, forKey: .fps) ?? d.fps
         hevc = try c.decodeIfPresent(Bool.self, forKey: .hevc) ?? d.hevc
         quality = (try? c.decodeIfPresent(ExportQuality.self, forKey: .quality)) ?? d.quality
+        gifSize = (try? c.decodeIfPresent(GIFSize.self, forKey: .gifSize)) ?? d.gifSize
+        gifFPS = try c.decodeIfPresent(Int.self, forKey: .gifFPS) ?? d.gifFPS
+        sizeLimitMB = try c.decodeIfPresent(Int.self, forKey: .sizeLimitMB)
     }
 
     public func bitRate(for size: CGSize) -> Int {
@@ -173,7 +217,15 @@ public struct ExportSettings: Codable, Equatable {
 extension Project {
     public var sourceSize: CGSize? { clips.first?.screenPixelSize }
 
-    public var renderSize: CGSize { outputSize(shortSide: export.resolution.rawValue) }
+    public var renderSize: CGSize { outputSize(shortSide: renderShortSide) }
+
+    /// The size the chosen format is written at: a GIF's longer side is its `gifSize`.
+    public var exportSize: CGSize {
+        guard export.format == .gif else { return renderSize }
+        let reference = outputSize(shortSide: 1000)
+        let shortSide = Double(export.gifSize.rawValue) * 1000 / Double(max(reference.width, reference.height))
+        return outputSize(shortSide: Int(shortSide.rounded()))
+    }
 
     public func outputSize(shortSide: Int) -> CGSize { export.aspect.size(shortSide: shortSide, source: sourceSize) }
 }

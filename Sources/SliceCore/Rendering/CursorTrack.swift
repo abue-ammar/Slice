@@ -34,7 +34,9 @@ public struct CursorTrack {
                 if let e = project.editedTime(clipIndex: i, local: k.t) { keys.append(KeyPress(t: e, modifiers: k.modifiers, key: k.key)) }
             }
             for h in log.keyHits where h.t >= 0 && h.t <= clip.duration {
-                if let e = project.editedTime(clipIndex: i, local: h.t) { hits.append(KeyHit(t: e, kind: h.kind)) }
+                if let seg = project.segment(clipIndex: i, local: h.t), !seg.isSpedUp {
+                    hits.append(KeyHit(t: seg.edited(local: h.t), kind: h.kind))
+                }
             }
         }
         raw.sort { $0.t < $1.t }

@@ -35,8 +35,15 @@ public struct Segment: Equatable {
     public var sourceStart: Double
     public var sourceEnd: Double
     public var editedStart: Double
-    public var duration: Double { sourceEnd - sourceStart }
+    public var speed = 1.0
+    public var sourceDuration: Double { sourceEnd - sourceStart }
+    /// How long it plays for in the edit.
+    public var duration: Double { sourceDuration / speed }
     public var editedEnd: Double { editedStart + duration }
+    public var isSpedUp: Bool { speed > 1 + 1e-6 }
+
+    public func local(at t: Double) -> Double { sourceStart + min(max(t - editedStart, 0) * speed, sourceDuration) }
+    public func edited(local: Double) -> Double { editedStart + (local - sourceStart) / speed }
 }
 
 extension Project {
@@ -62,19 +69,23 @@ extension Project {
         var out: [Segment] = []
         var t = 0.0
         for (i, clip) in clips.enumerated() {
-            let splitTimes = splits.filter { $0.clipID == clip.id }.map(\.time).sorted()
+            let ranges = speedRanges(forClip: clip.id)
+            let marks = (splits.filter { $0.clipID == clip.id }.map(\.time) + ranges.flatMap { [$0.start, $0.end] }).sorted()
             var cursor = 0.0
+            func add(_ a: Double, _ b: Double) {
+                let mid = (a + b) / 2
+                let speed = ranges.first { $0.start <= mid && mid < $0.end }?.speed ?? 1
+                let seg = Segment(clipIndex: i, sourceStart: a, sourceEnd: b, editedStart: t, speed: speed)
+                out.append(seg)
+                t = seg.editedEnd
+            }
             for (a, b) in cuts(forClip: clip.id, duration: clip.duration) + [(clip.duration, clip.duration)] {
                 var pieceStart = cursor
-                for s in splitTimes where s > pieceStart + Self.minSegment && s < a - Self.minSegment {
-                    out.append(Segment(clipIndex: i, sourceStart: pieceStart, sourceEnd: s, editedStart: t))
-                    t += s - pieceStart
+                for s in marks where s > pieceStart + Self.minSegment && s < a - Self.minSegment {
+                    add(pieceStart, s)
                     pieceStart = s
                 }
-                if a - pieceStart >= Self.minSegment {
-                    out.append(Segment(clipIndex: i, sourceStart: pieceStart, sourceEnd: a, editedStart: t))
-                    t += a - pieceStart
-                }
+                if a - pieceStart >= Self.minSegment { add(pieceStart, a) }
                 cursor = max(cursor, b)
             }
         }
@@ -136,10 +147,11 @@ extension Project {
     }
 
     public func editedTime(clipIndex: Int, local: Double) -> Double? {
-        for s in segments where s.clipIndex == clipIndex && local >= s.sourceStart && local <= s.sourceEnd {
-            return s.editedStart + (local - s.sourceStart)
-        }
-        return nil
+        segment(clipIndex: clipIndex, local: local)?.edited(local: local)
+    }
+
+    public func segment(clipIndex: Int, local: Double) -> Segment? {
+        segments.first { $0.clipIndex == clipIndex && local >= $0.sourceStart && local <= $0.sourceEnd }
     }
 
     public func editedPosition(clipIndex: Int, local: Double) -> Double {
@@ -154,15 +166,15 @@ extension Project {
     public func sourceTime(edited t: Double) -> (clipIndex: Int, local: Double)? {
         let segs = segments
         guard let s = segs.last(where: { $0.editedStart <= t }) ?? segs.first else { return nil }
-        return (s.clipIndex, s.sourceStart + min(max(t - s.editedStart, 0), s.duration))
+        return (s.clipIndex, s.local(at: t))
     }
 
     public mutating func removeTime(from a: Double, to b: Double) {
         let a = max(a, 0), b = min(b, duration)
         guard b - a > 1e-6 else { return }
         for s in segments where s.editedEnd > a && s.editedStart < b {
-            let lo = s.sourceStart + max(a - s.editedStart, 0)
-            let hi = s.sourceStart + min(b - s.editedStart, s.duration)
+            let lo = s.local(at: a)
+            let hi = s.local(at: b)
             cuts.append(Cut(clipID: clips[s.clipIndex].id, start: lo, end: hi))
         }
         normaliseCuts()
@@ -176,6 +188,8 @@ extension Project {
         }
         cameraBlocks = cameraBlocks.compactMap { blk in remap(blk.start, blk.end).map { var blk = blk; (blk.start, blk.end) = $0; return blk } }
         zoomBlocks = zoomBlocks.compactMap { blk in remap(blk.start, blk.end).map { var blk = blk; (blk.start, blk.end) = $0; return blk } }
+        redactions = redactions.compactMap { blk in remap(blk.start, blk.end).map { var blk = blk; (blk.start, blk.end) = $0; return blk } }
+        spotlights = spotlights.compactMap { blk in remap(blk.start, blk.end).map { var blk = blk; (blk.start, blk.end) = $0; return blk } }
     }
 
     public mutating func removeSource(clipIndex: Int, from a: Double, to b: Double) {
@@ -207,6 +221,8 @@ extension Project {
         }
         for i in cameraBlocks.indices { (cameraBlocks[i].start, cameraBlocks[i].end) = remap(cameraBlocks[i].start, cameraBlocks[i].end) }
         for i in zoomBlocks.indices { (zoomBlocks[i].start, zoomBlocks[i].end) = remap(zoomBlocks[i].start, zoomBlocks[i].end) }
+        for i in redactions.indices { (redactions[i].start, redactions[i].end) = remap(redactions[i].start, redactions[i].end) }
+        for i in spotlights.indices { (spotlights[i].start, spotlights[i].end) = remap(spotlights[i].start, spotlights[i].end) }
     }
 
     mutating func normaliseCuts() {
@@ -263,6 +279,7 @@ extension Project {
         if join.gaps.isEmpty, let prev = join.previous, let next = join.next, prev.clipIndex == next.clipIndex {
             let id = clips[prev.clipIndex].id
             splits.removeAll { $0.clipID == id && abs($0.time - next.sourceStart) < 1e-6 }
+            if abs(prev.speed - next.speed) > 1e-6 { setSpeed(prev.speed, for: next) }
             return
         }
         for gap in join.gaps { restore(clipID: gap.clipID, from: gap.start, to: gap.end) }

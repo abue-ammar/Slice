@@ -11,15 +11,28 @@ import SwiftUI
 struct ExportSheet: View {
     @ObservedObject var editor: EditorModel
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("export.allShapes") private var allShapes = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Export").font(.title2.weight(.semibold))
             Form {
-                Picker("Aspect ratio", selection: $editor.project.export.aspect) {
-                    ForEach(OutputAspect.allCases, id: \.self) { Text($0.menuTitle) }
+                LabeledContent("Made for") { ExportPresetMenu(editor: editor) }
+                Picker("Format", selection: $editor.project.export.format) {
+                    ForEach(ExportFormat.allCases, id: \.self) { Text($0.label) }
                 }
-                OutputSettingsFields(editor: editor)
+                Toggle("All three shapes (16:9, 9:16 and 1:1)", isOn: $allShapes)
+                    .help("Writes one file per shape from the same edit, into a folder you choose")
+                if !allShapes {
+                    Picker("Aspect ratio", selection: $editor.project.export.aspect) {
+                        ForEach(OutputAspect.allCases, id: \.self) { Text($0.menuTitle) }
+                    }
+                }
+                if editor.project.export.format == .gif {
+                    GIFSettingsFields(editor: editor)
+                } else {
+                    OutputSettingsFields(editor: editor)
+                }
                 if !editor.captions.isEmpty {
                     Toggle("Burn in subtitles", isOn: $editor.project.subtitles.burnIn)
                 }
@@ -27,19 +40,33 @@ struct ExportSheet: View {
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
-                Button("Export…") { chooseAndExport() }
+                Button(allShapes ? "Export 3 Files…" : "Export…") { allShapes ? chooseFolderAndExport() : chooseAndExport() }
                     .buttonStyle(.borderedProminent)
             }
         }
         .padding(20)
         .frame(width: 440)
+        .animation(.snappy, value: allShapes)
+    }
+
+    private func chooseFolderAndExport() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.prompt = "Export Here"
+        panel.message = "Choose where to save the 16:9, 9:16 and 1:1 files."
+        guard panel.runModal() == .OK, let folder = panel.url else { return }
+        dismiss()
+        editor.startBatchExport(in: folder)
     }
 
     private func chooseAndExport() {
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.mpeg4Movie]
-        let size = editor.project.renderSize
-        panel.nameFieldStringValue = "\(editor.project.name) \(Int(size.width))x\(Int(size.height)).mp4"
+        let format = editor.project.export.format
+        panel.allowedContentTypes = [format == .gif ? .gif : .mpeg4Movie]
+        let size = editor.project.exportSize
+        panel.nameFieldStringValue = "\(editor.project.name) \(Int(size.width))x\(Int(size.height)).\(format.fileExtension)"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         dismiss()
         editor.startExport(to: url)
@@ -67,8 +94,41 @@ struct OutputSettingsFields: View {
         }
         LabeledContent("Output") {
             let s = editor.project.renderSize
-            let mbps = Double(editor.project.export.bitRate(for: s)) / 1_000_000
-            Text("\(Int(s.width)) × \(Int(s.height)) · \(Int(mbps.rounded())) Mbit/s").monospacedDigit()
+            let mbps = Double(editor.project.exportBitRate) / 1_000_000
+            Text("\(Int(s.width)) × \(Int(s.height)) · \(ExportSheet.rate(mbps))").monospacedDigit()
+        }
+        if let limit = editor.project.export.sizeLimitMB {
+            LabeledContent("File size") {
+                HStack(spacing: 6) {
+                    Text("Under \(limit) MB")
+                    Button { editor.project.export.sizeLimitMB = nil } label: { Image(systemName: "xmark.circle.fill") }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                        .help("No size limit")
+                }
+            }
+            let s = editor.project.renderSize
+            if min(s.width, s.height) < CGFloat(editor.project.export.resolution.rawValue) {
+                Text("Lowered from \(editor.project.export.resolution.label) to fit \(limit) MB.")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+struct GIFSettingsFields: View {
+    @ObservedObject var editor: EditorModel
+
+    var body: some View {
+        Picker("Size", selection: $editor.project.export.gifSize) {
+            ForEach(GIFSize.allCases, id: \.self) { Text("\($0.label) (\($0.rawValue) px)") }
+        }
+        Picker("Frame rate", selection: $editor.project.export.gifFPS) {
+            ForEach(ExportSettings.gifFrameRates, id: \.self) { Text("\($0) fps").tag($0) }
+        }
+        LabeledContent("Output") {
+            let s = editor.project.exportSize
+            Text("\(Int(s.width)) × \(Int(s.height)) · no sound").monospacedDigit()
         }
     }
 }
@@ -90,5 +150,35 @@ struct PreviewQualityMenu: View {
         .buttonStyle(PillButtonStyle(selected: quality < 1))
         .fixedSize()
         .help("Preview quality: lower renders fewer pixels for smoother playback on slower Macs. Export is always full quality.")
+    }
+}
+
+extension ExportSheet {
+    static func rate(_ mbps: Double) -> String {
+        mbps < 10 ? String(format: "%.1f Mbit/s", mbps) : "\(Int(mbps.rounded())) Mbit/s"
+    }
+}
+
+/// Picks where the video is going, which sets the export settings for it.
+struct ExportPresetMenu: View {
+    @ObservedObject var editor: EditorModel
+
+    var body: some View {
+        let current = ExportPreset.matching(editor.project.export)
+        Menu {
+            ForEach(ExportPreset.allCases.dropFirst()) { preset in
+                Button {
+                    withAnimation(.snappy) { preset.apply(to: &editor.project.export) }
+                } label: {
+                    Label { Text(preset.label) + Text("  \(preset.detail)").foregroundStyle(.secondary) } icon: {
+                        Image(systemName: current == preset ? "checkmark" : preset.symbol)
+                    }
+                }
+            }
+        } label: {
+            Label(current.label, systemImage: current.symbol)
+        }
+        .fixedSize()
+        .help("Sets the resolution, frame rate, codec and file size for where the video is going")
     }
 }

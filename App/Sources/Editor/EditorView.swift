@@ -51,7 +51,7 @@ struct EditorView: View {
             .padding(.top, 8)
             .padding(.bottom, 10)
             TimelineView(editor: editor, zoom: $timelineZoom)
-                .frame(height: editor.shows3DTrack ? 288 : 242)
+                .frame(height: editor.shows3DTrack ? 380 : 334)
                 .animation(Theme.slide, value: editor.shows3DTrack)
         }
         .overlay {
@@ -177,6 +177,16 @@ struct EditorView: View {
             EditorCommand(id: "autozoom", title: "Smart zoom", detail: "Clicks, typing and pauses", symbol: "sparkle.magnifyingglass",
                           group: .edit, keywords: "auto suggest zooms analyse",
                           enabled: editor.hasPointerLog && editor.smartZoomProgress == nil) { editor.autoZoom() },
+            EditorCommand(id: "quiet", title: "Speed up quiet moments", detail: "Idle and typing", symbol: "hare",
+                          group: .edit, keywords: "fast forward skip boring idle typing timelapse",
+                          enabled: editor.hasPointerLog) { editor.speedUpQuietMoments(QuietMoments.Settings.saved) },
+            EditorCommand(id: "sensitive", title: "Find sensitive text", detail: "Emails, cards, keys", symbol: "eye.slash",
+                          group: .edit, keywords: "blur redact privacy hide password email api key",
+                          enabled: editor.privacyScanProgress == nil) { editor.findSensitiveText() },
+            EditorCommand(id: "addblur", title: "Add blur at playhead", symbol: "eye.slash", group: .timeline,
+                          keywords: "redact pixelate hide privacy") { editor.addRedaction(at: editor.time) },
+            EditorCommand(id: "addspotlight", title: "Add spotlight at playhead", symbol: SpotlightLane.symbol, group: .timeline,
+                          keywords: "focus highlight dim blur circle") { editor.addSpotlight(at: editor.time) },
             EditorCommand(id: "addzoom", title: "Add zoom at playhead", symbol: "plus.magnifyingglass", group: .timeline,
                           keywords: "block") { editor.addZoomBlock(at: editor.time) },
             EditorCommand(id: "addcamera", title: "Add camera layout at playhead", symbol: "person.crop.rectangle",
@@ -221,7 +231,7 @@ struct EditorView: View {
         }
         list += [
             EditorCommand(id: "export", title: "Export…", symbol: "square.and.arrow.up", group: .project,
-                          keys: ["⇧", "⌘", "E"], keywords: "render save video") { openExport() },
+                          keys: ["⇧", "⌘", "E"], keywords: "render save video gif") { openExport() },
             EditorCommand(id: "srt", title: "Export subtitles…", detail: ".srt", symbol: "captions.bubble", group: .project,
                           enabled: !editor.captions.isEmpty) { editor.exportSRT() },
             EditorCommand(id: "transcribe", title: "Transcribe", symbol: "waveform", group: .project, keywords: "speech text",

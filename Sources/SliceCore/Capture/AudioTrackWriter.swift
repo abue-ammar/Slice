@@ -28,6 +28,7 @@ public final class AudioTrackWriter {
 
     public init(url: URL, channels: Int) throws {
         writer = try AVAssetWriter(outputURL: url, fileType: .m4a)
+        writer.movieFragmentInterval = ProjectBundle.fragmentInterval
         self.channels = channels
     }
 

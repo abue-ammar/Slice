@@ -56,7 +56,7 @@ final class ProjectPreviews {
         let tolerance = CMTime(seconds: 0.5, preferredTimescale: 600)
         generator.requestedTimeToleranceBefore = tolerance
         generator.requestedTimeToleranceAfter = tolerance
-        let local = segment.sourceStart + max(t - segment.editedStart, 0)
+        let local = segment.local(at: t)
         guard let frame = try? await generator.image(at: CMTime(seconds: local, preferredTimescale: 600)).image else { return preview }
         let scene = RenderScene(project: project, output: size,
                                 cursor: CursorTrack(project: project, logs: bundle.loadCursorLogs(for: project)))

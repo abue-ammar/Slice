@@ -18,6 +18,8 @@ struct BlockView<Detail: View>: View {
     let selected: Bool
     let select: () -> Void
     let setRange: (Double, Double) -> Void
+    /// A thin block sharing its lane with others at the same time: just the detail, smaller.
+    var compact = false
     @ViewBuilder var detail: Detail
 
     @State private var origin: (Double, Double)?
@@ -26,13 +28,21 @@ struct BlockView<Detail: View>: View {
     var body: some View {
         let width = max((end - start) * pps, 6)
         let lit = hovering || selected
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
+        let radius: CGFloat = compact ? 6 : 10
+        RoundedRectangle(cornerRadius: radius, style: .continuous)
             .fill(LinearGradient(colors: [color.opacity(lit ? 1 : 0.9), color.opacity(lit ? 0.82 : 0.7)],
                                  startPoint: .top, endPoint: .bottom))
-            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous)
                 .strokeBorder(Color.white.opacity(selected ? 0.9 : hovering ? 0.3 : 0.12), lineWidth: selected ? 2 : 1))
             .overlay {
-                if width > 70 {
+                if compact {
+                    if width > 50 {
+                        detail.font(.rounded(10)).foregroundStyle(.white).labelStyle(.titleAndIcon)
+                            .lineLimit(1)
+                            .padding(.horizontal, 8)
+                            .allowsHitTesting(false)
+                    }
+                } else if width > 70 {
                     VStack(spacing: 0) {
                         Text(title).font(.system(size: 10, weight: .semibold)).foregroundStyle(.white.opacity(0.5))
                         detail.font(.rounded(12)).foregroundStyle(.white).labelStyle(.titleAndIcon)

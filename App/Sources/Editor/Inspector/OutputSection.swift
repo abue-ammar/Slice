@@ -13,14 +13,25 @@ struct OutputSection: View {
 
     var body: some View {
         let export = editor.project.export
-        let size = editor.project.renderSize
-        let mbps = Double(export.bitRate(for: size)) / 1_000_000
-        PanelSection("Video") {
+        let size = editor.project.exportSize
+        let gif = export.format == .gif
+        let mbps = Double(editor.project.exportBitRate) / 1_000_000
+        PanelSection("Export") {
+            field("Made for") {
+                ExportPresetMenu(editor: editor)
+                    .menuStyle(.button)
+                    .buttonStyle(PillButtonStyle())
+            }
+            field("Format") {
+                SegmentedControl(selection: $editor.project.export.format, options: ExportFormat.allCases, title: \.label)
+            }
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(Int(size.width)) × \(Int(size.height))")
                     .font(.rounded(20, .semibold).monospacedDigit())
                     .contentTransition(.numericText())
-                Text("\(export.fps) fps · \(export.hevc ? "HEVC" : "H.264") · \(Int(mbps.rounded())) Mbit/s")
+                Text(gif ? "GIF · \(export.gifFPS) fps · no sound"
+                    : "\(export.fps) fps · \(export.hevc ? "HEVC" : "H.264") · \(ExportSheet.rate(mbps))"
+                    + (export.sizeLimitMB.map { " · under \($0) MB" } ?? ""))
                     .font(.rounded(12).monospacedDigit())
                     .foregroundStyle(.secondary)
                     .contentTransition(.numericText())
@@ -31,24 +42,35 @@ struct OutputSection: View {
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.stroke))
             .animation(.snappy, value: export)
 
-            field("Resolution") {
-                SegmentedControl(selection: $editor.project.export.resolution, options: OutputResolution.allCases, title: \.label)
-            }
-            field("Frame rate") {
-                SegmentedControl(selection: $editor.project.export.fps, options: [30, 60, 120], title: { "\($0) fps" })
-            }
-            field("Quality") {
-                SegmentedControl(selection: $editor.project.export.quality, options: ExportQuality.allCases, title: \.label)
-            }
-            MoreOptions(id: "output") {
-                field("Codec") {
-                    SegmentedControl(selection: $editor.project.export.hevc, options: [true, false],
-                                     title: { $0 ? "HEVC" : "H.264" })
+            if gif {
+                field("Size") {
+                    SegmentedControl(selection: $editor.project.export.gifSize, options: GIFSize.allCases, title: \.label)
                 }
-                PanelNote(export.hevc ? "HEVC makes smaller files." : "H.264 plays almost everywhere.")
-            }
-            if let recorded = editor.project.clips.compactMap(\.frameRate).max(), export.fps > recorded {
-                PanelNote("Recorded at \(recorded) fps; a higher export rate repeats frames but keeps the pointer and zooms smooth.")
+                field("Frame rate") {
+                    SegmentedControl(selection: $editor.project.export.gifFPS, options: ExportSettings.gifFrameRates,
+                                     title: { "\($0) fps" })
+                }
+                PanelNote("GIFs play anywhere but have no sound and fewer colours. Keep them short; files grow quickly.")
+            } else {
+                field("Resolution") {
+                    SegmentedControl(selection: $editor.project.export.resolution, options: OutputResolution.allCases, title: \.label)
+                }
+                field("Frame rate") {
+                    SegmentedControl(selection: $editor.project.export.fps, options: [30, 60, 120], title: { "\($0) fps" })
+                }
+                field("Quality") {
+                    SegmentedControl(selection: $editor.project.export.quality, options: ExportQuality.allCases, title: \.label)
+                }
+                MoreOptions(id: "output") {
+                    field("Codec") {
+                        SegmentedControl(selection: $editor.project.export.hevc, options: [true, false],
+                                         title: { $0 ? "HEVC" : "H.264" })
+                    }
+                    PanelNote(export.hevc ? "HEVC makes smaller files." : "H.264 plays almost everywhere.")
+                }
+                if let recorded = editor.project.clips.compactMap(\.frameRate).max(), export.fps > recorded {
+                    PanelNote("Recorded at \(recorded) fps; a higher export rate repeats frames but keeps the pointer and zooms smooth.")
+                }
             }
         }
     }

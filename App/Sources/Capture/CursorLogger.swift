@@ -19,9 +19,23 @@ final class CursorLogger {
         var scrolls: [CursorLog.Sample] = []
         var typing: [Double] = []
         var hits: [KeyHit] = []
+
+        /// The log as saved with a take, timed from its start (host-clock seconds).
+        func log(since start: Double) -> CursorLog {
+            CursorLog(samples: samples.sorted { $0.t < $1.t }.map { .init(t: $0.t - start, x: $0.x, y: $0.y) },
+                      clicks: clicks.map { .init(t: $0.t - start, x: $0.x, y: $0.y) },
+                      types: types.map { .init(t: $0.t - start, type: $0.type) },
+                      keys: keys.map { KeyPress(t: $0.t - start, modifiers: $0.modifiers, key: $0.key) },
+                      scrolls: scrolls.map { .init(t: $0.t - start, x: $0.x, y: $0.y) },
+                      typing: typing.map { $0 - start },
+                      hits: hits.map { KeyHit(t: $0.t - start, kind: $0.kind) })
+        }
     }
 
     typealias Mapping = (NSPoint) -> CGPoint
+
+    /// What's been logged so far, for saving while the take records.
+    var snapshot: Result { result }
 
     private var result = Result()
     private var map: Mapping = { _ in .zero }
@@ -89,7 +103,6 @@ final class CursorLogger {
         monitors = []
         stopKeys()
         analysis = nil
-        result.samples.sort { $0.t < $1.t }
         return result
     }
 
