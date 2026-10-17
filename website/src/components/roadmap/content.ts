@@ -1,7 +1,5 @@
 export const PLANNED = [
-	"Animated video backgrounds",
 	"Touch click effect, made for iPhone recordings",
-	"Spotlight click effect that dims all but the click",
 ];
 
 export const NOTARIZED = {
@@ -20,6 +18,8 @@ export const SHIPPED = [
 	"Edit the video by editing its transcript",
 	"Voice enhancement that runs on your Mac",
 	"Ripple and liquid click effects",
+	"A spotlight that dims or blurs all but the click",
+	"Find and blur emails, card numbers and keys",
 	"Record an iPhone, or put the take on a 3D one",
 	"Export 16:9, 9:16 and 1:1 from one edit",
 	"Captions burned in, or saved as .srt",

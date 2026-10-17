@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "argentui/styles.css" layer(components);
 
 @theme {
 	--color-bg: #000;

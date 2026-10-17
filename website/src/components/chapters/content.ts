@@ -27,7 +27,7 @@ export const CHAPTERS: Chapter[] = [
 		id: "cursor",
 		label: "Cursor",
 		title: "Your cursor is saved as a path, not pixels.",
-		body: "So you can change it after recording. Smooth out a shaky hand without adding lag, make the pointer bigger, switch between Big Sur and Tahoe artwork, add motion blur, or hide it. Every click can leave a soft ripple or a liquid wave.",
+		body: "So you can change it after recording. Smooth out a shaky hand without adding lag, make the pointer bigger, switch between Big Sur and Tahoe artwork, add motion blur, or hide it. Every click can leave a soft ripple, a liquid wave, or a spotlight that dims or blurs everything around it.",
 		stage: "A jittery recorded pointer path next to the smoothed path the cursor actually follows.",
 	},
 	{
