@@ -26,6 +26,9 @@ struct EditorView: View {
                     PreviewHeader(editor: editor)
                     PreviewArea(editor: editor)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                            ProjectFaces.shared.measuredPreviewArea($0)
+                        }
                         .padding(.horizontal, 28)
                         .padding(.vertical, 14)
                     TransportBar(editor: editor, timelineZoom: $timelineZoom)
