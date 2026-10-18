@@ -154,16 +154,16 @@ struct BackgroundSection: View {
                     editor.project.style.backgroundBottom = preset.bottom
                     editor.useGradientBackground()
                 } content: {
-                    LinearGradient(colors: [color(preset.top), color(preset.bottom)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    LinearGradient(colors: [Color(rgba: preset.top), Color(rgba: preset.bottom)], startPoint: .topLeading, endPoint: .bottomTrailing)
                 }
                 .help(id)
             }
-            HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Custom colours").font(.system(size: 13))
-                Spacer()
-                ColorPicker("Top", selection: binding(\.backgroundTop)).labelsHidden()
-                Image(systemName: "arrow.right").font(.system(size: 10, weight: .semibold)).foregroundStyle(.tertiary)
-                ColorPicker("Bottom", selection: binding(\.backgroundBottom)).labelsHidden()
+                MorphColorPicker(fields: [
+                    .init(id: "top", label: "Top", color: $editor.project.style.backgroundTop),
+                    .init(id: "bottom", label: "Bottom", color: $editor.project.style.backgroundBottom),
+                ]) { editor.useGradientBackground() }
             }
         }
     }
@@ -194,18 +194,6 @@ struct BackgroundSection: View {
     private static var wallpapers: [URL] { Wallpapers.bundled }
 
     private func isSelected(_ url: URL) -> Bool { style.backgroundImage == "backgrounds/\(url.lastPathComponent)" }
-
-    private func color(_ c: RGBA) -> Color { Color(.sRGB, red: c.r, green: c.g, blue: c.b, opacity: c.a) }
-
-    private func binding(_ kp: WritableKeyPath<FrameStyle, RGBA>) -> Binding<Color> {
-        Binding(
-            get: { color(editor.project.style[keyPath: kp]) },
-            set: { new in
-                guard let ns = NSColor(new).usingColorSpace(.sRGB) else { return }
-                editor.project.style[keyPath: kp] = RGBA(ns.redComponent, ns.greenComponent, ns.blueComponent, ns.alphaComponent)
-                editor.useGradientBackground()
-            })
-    }
 
     private func addImages() {
         let panel = NSOpenPanel()
