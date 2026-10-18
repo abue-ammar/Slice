@@ -17,7 +17,7 @@
     "@opennextjs/cloudflare": "^1.20.3",
     "@paper-design/shaders-react": "0.0.81",
     "argentui": "0.4.1",
-    "border-beam": "1.4.1",
+    "border-beam": "^1.4.1",
     "fumadocs-core": "^16.17.4",
     "fumadocs-mdx": "^15.4.7",
     "motion": "13.4.6",

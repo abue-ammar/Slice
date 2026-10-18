@@ -28,7 +28,7 @@ export default function SwapText({ words, index, className = "" }: Props) {
 		const label = labels()[i];
 		if (!host || !label) return;
 		if (!glide) host.style.transition = "none";
-		host.style.width = `${label.offsetWidth}px`;
+		host.style.width = `${label.scrollWidth}px`;
 		if (!glide) {
 			void host.offsetWidth;
 			host.style.transition = "";
@@ -110,7 +110,7 @@ export default function SwapText({ words, index, className = "" }: Props) {
 	return (
 		<span ref={stack} className={`inline-grid align-baseline whitespace-nowrap transition-[width] duration-600 ease-swap ${className}`} aria-hidden>
 			{words.map((word, i) => (
-				<span key={word} className="group/label col-start-1 row-start-1 inline-flex justify-self-start" data-active={i === initial ? "" : undefined}>
+				<span key={word} className="group/label col-start-1 row-start-1 inline-flex w-0 justify-self-start data-active:w-auto" data-active={i === initial ? "" : undefined}>
 					{Array.from(word).map((char, j) => (
 						<span key={j} className="inline-block opacity-0 blur-[0.11em] will-change-[filter,opacity,transform] [transform:translateY(-0.22em)_scale(0.7)] group-data-active/label:opacity-100 group-data-active/label:blur-none group-data-active/label:[transform:none]">
 							{char === " " ? " " : char}

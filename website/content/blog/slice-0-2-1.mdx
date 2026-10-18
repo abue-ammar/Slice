@@ -1,0 +1,77 @@
+---
+title: Slice 0.2.1
+description: Spotlight, automatic blurring of private info, smart speed and quicker sharing in 0.2, plus smoother transitions and a new colour picker in 0.2.1.
+date: 2026-10-18T07:00:00Z
+cover: /media/slice-0-2-1.jpg
+---
+
+<Figure src="/media/slice-0-2-1.jpg" alt="Slice 0.2.1" />
+
+Slice 0.2.1 is out. It comes a day after 0.2, which was the biggest update since the first release, so this post covers both. If you're coming from 0.1, there's a lot here. Slice is still free, there's still no account, and everything still stays on your Mac.
+
+## The idea behind 0.2
+
+After 0.1, most of the feedback came down to the same thing: Slice made recordings look good, but there was still too much work between pressing Stop and sharing the video. You'd hide an email address by hand, cut out a long stretch of typing, then export the same take three times for three different places.
+
+So 0.2 is about that gap. Slice now does more of the tidying for you, and gets the result where it needs to go faster.
+
+## Show people where to look
+
+**Spotlight** dims or blurs everything except the spot you're pointing at. It's the simplest way to say "look here" without drawing arrows. You can turn it on for every click in Cursor › Clicks, or add a spotlight to the timeline for one part of the video. A spotlight can follow the pointer or stay fixed on one spot.
+
+**Zooms now follow typing, too.** Before, auto-zoom only framed the spot you clicked. Now, when you type, it frames the words as they appear, so filling in a form or writing code reads clearly even at small sizes.
+
+## Keep private things private
+
+Screen recordings pick up more than you mean them to: an email in a sidebar, an API key in a terminal, a card number in a checkout form. **Find sensitive text** scans the recording for email addresses, card numbers and API keys, and blurs them only while they're on screen.
+
+For anything it doesn't catch, draw your own blur or pixelate box. Both kinds stay in place through zooms, tilts and the lens, so nothing slips out when the camera moves. Like transcription, the scan runs on your Mac, and the recording never leaves it.
+
+## Skip the slow parts
+
+Most recordings have dead time: waiting for a page to load, thinking about what to click next, typing a long command. **Smart speed** finds idle moments and long stretches of typing and speeds them up in one click. It leaves a moment at normal speed on each side, so the change doesn't feel jarring. If you don't like the result, Back to normal speed undoes it.
+
+## Share it faster
+
+Exporting got a lot simpler:
+
+- **Presets** for YouTube, X, LinkedIn, Discord and Email & Slack. Presets with a size limit pick the bitrate and resolution for you, so the file fits first time.
+- **GIF export** in three sizes, for READMEs, docs and chats that don't play video.
+- **All three shapes at once.** Export 16:9, 9:16 and 1:1 in one go, instead of three separate exports.
+- **Drag and drop.** Drag a finished export straight into Slack, Mail, Finder or any other app.
+
+There's also **background blur** for wallpapers and your own images, so a busy photo can sit behind your recording without fighting it.
+
+## Recordings survive crashes
+
+This one matters most to me. If Slice quits, crashes or your Mac loses power while you're recording, the take comes back the next time you open Slice, missing at most the last 2 seconds. Slice is still early software, and losing a long take to a bug is the worst thing it could do to you.
+
+I also fixed the cursor's motion blur, which stuttered the first time a fast move played.
+
+## What's new in 0.2.1
+
+0.2.1 is a smaller release that makes Slice feel smoother to move around in:
+
+- **Projects and the editor flow into each other.** Opening a project grows its card into the editor, and closing it shrinks back. It's a small thing, but you always know where you are.
+- **The editor reopens where you left off**, and each project card shows that frame, so it's easier to find the take you were working on.
+- **A smoother morph** from the capture bar into Projects.
+- **A new colour picker** for backgrounds. It grows out of its swatch and takes hex, RGB, HSL or OKLCH, and you can save colours to use again.
+- **Split camera corners** no longer bulge at the seam between the screen and the camera.
+
+## Install or update
+
+Run this in Terminal:
+
+```bash
+curl -fsSL https://slice.rit3zh.dev/install.sh | bash
+```
+
+Or [download Slice.dmg](https://github.com/rit3zh/slice/releases/latest) and drag Slice to Applications. If macOS says it can't verify Slice, click **Done**, then go to **System Settings › Privacy & Security** and click **Open Anyway**. You only need to do this once.
+
+Slice needs macOS 15 or later on Apple silicon.
+
+## What's next
+
+The [roadmap](/roadmap) shows what I'm working on next. If something you need isn't there, or something in this release doesn't work the way you expected, [open an issue](https://github.com/rit3zh/slice/issues/new) and tell me. Every report so far has made Slice better.
+
+And if Slice is saving you time, you can [buy me a coffee](https://buymeacoffee.com/rit3zh). Thanks for using it.

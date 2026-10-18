@@ -5,6 +5,7 @@ import { BrandGlyph } from "./glyphs";
 import CopyButton from "./license/copy-button";
 import HeroShowcase from "./hero-showcase";
 import HeroTitle from "./hero-title";
+import ReleaseChip from "./release-chip";
 import MetalButton from "./metal-button";
 
 const INSTALL = `curl -fsSL ${site.url}/install.sh | bash`;
@@ -13,6 +14,7 @@ export default function Hero() {
 	return (
 		<header className="overflow-x-clip px-(--gutter) pt-[clamp(80px,14vh,144px)] text-center" id="top">
 			<div className="blur-in" style={step(0)}>
+				<ReleaseChip />
 				<HeroTitle />
 			</div>
 			<p className="blur-in mx-auto mt-[22px] max-w-[30rem] text-[17px] leading-[1.55] text-balance text-muted" style={step(1)}>
