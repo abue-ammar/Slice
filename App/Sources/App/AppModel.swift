@@ -104,7 +104,8 @@ final class AppModel: ObservableObject {
 
     func openProjectsFromBar() {
         presentMainWindow(from: CaptureBar.surface(for: nil))
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+        // After the morph: taking the bar down stops its camera and mic previews, which holds the main thread.
+        DispatchQueue.main.asyncAfter(deadline: .now() + WindowMorph.total) { [weak self] in
             guard self?.recording == nil else { return }
             self?.cancelSetup()
         }
@@ -115,6 +116,7 @@ final class AppModel: ObservableObject {
             withTransaction(\.disablesAnimations, true) { self.screen = screen }
             return
         }
+        if case .home = screen, heroClose() { return }
         switchScreen { screen }
     }
 
@@ -154,16 +156,17 @@ final class AppModel: ObservableObject {
     }
 
     func open(_ bundle: ProjectBundle) {
-        guard !waitForRecovery({ self.open(bundle) }) else { return }
+        guard !waitForRecovery({ self.open(bundle) }), !ProjectFaces.shared.busy, !heroOpen(bundle) else { return }
         switchScreen { [weak self] in self?.editorScreen(for: bundle) }
     }
 
-    private func editorScreen(for bundle: ProjectBundle) -> Screen? {
+    func editorScreen(for bundle: ProjectBundle) -> Screen? {
         do {
             let project = try bundle.load()
             openEditor?.close()
             NSDocumentController.shared.noteNewRecentDocumentURL(bundle.url)
-            return .editor(EditorModel(bundle: bundle, project: project))
+            return .editor(EditorModel(bundle: bundle, project: project,
+                                       openAt: ProjectPreviews.openingTime(for: bundle, project: project)))
         } catch {
             self.error = "Couldn't open “\(bundle.displayName)”: \(error.localizedDescription)"
             return nil
@@ -279,7 +282,7 @@ final class AppModel: ObservableObject {
             reloadProjects()
             hidden.filter { $0 !== Self.mainWindow }.forEach { $0.orderFront(nil) }
             presentMainWindow(from: source)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + WindowMorph.total) { [weak self] in
                 guard let self, recording == nil else { return }
                 dismissWindow?(id: Self.captureBarID)
             }
