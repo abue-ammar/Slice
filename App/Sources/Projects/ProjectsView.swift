@@ -15,7 +15,10 @@ struct ProjectsView: View {
     @State private var search = ""
     @State private var lightsInset: CGFloat?
     @State private var scrolled: CGFloat = 0
-    @State private var columns = 3
+    @State private var columns = Self.lastColumns
+    @State private var laidOut = false
+    /// The grid comes back with the columns it had, so it doesn't reflow under a picture flying back into it.
+    private static var lastColumns = 3
 
     static let barHeight: CGFloat = 52
     private static let gutter: CGFloat = 22
@@ -39,7 +42,10 @@ struct ProjectsView: View {
         .toolbar(removing: .title)
         .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         .tint(Theme.accent)
-        .onAppear { model.reloadProjects() }
+        .onAppear {
+            model.reloadProjects()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { laidOut = true }
+        }
         .dropDestination(for: URL.self) { urls, _ in
             let found = urls.filter(ProjectBundle.isProject)
             guard !found.isEmpty else { return false }
@@ -96,6 +102,8 @@ struct ProjectsView: View {
 
     @ViewBuilder private var content: some View {
         let shown = self.shown
+        let days = ProjectDay.group(shown)
+        let firstURL = days.first?.projects.first?.url
         if model.projects.isEmpty {
             EmptyProjects(record: { model.newRecording() }, importVideos: importVideos)
         } else if shown.isEmpty {
@@ -113,7 +121,7 @@ struct ProjectsView: View {
             ScrollView {
                 // Plain VStack: a LazyVStack sometimes left an emptied day behind as a blank gap.
                 VStack(alignment: .leading, spacing: 34) {
-                    ForEach(ProjectDay.group(shown)) { day in
+                    ForEach(days) { day in
                         VStack(alignment: .leading, spacing: 14) {
                             Text(day.title)
                                 .font(.system(size: 12, weight: .medium))
@@ -123,7 +131,7 @@ struct ProjectsView: View {
                                                      count: columns),
                                       alignment: .leading, spacing: 26) {
                                 ForEach(day.projects, id: \.url) { bundle in
-                                    ProjectCard(bundle: bundle) {
+                                    ProjectCard(bundle: bundle, first: bundle.url == firstURL) {
                                         model.open(bundle)
                                     } delete: {
                                         withAnimation(Theme.slide) { model.trash(bundle) }
@@ -149,11 +157,20 @@ struct ProjectsView: View {
             } action: { _, amount in
                 withAnimation(.smooth(duration: 0.18)) { scrolled = amount }
             }
+            .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top <= 0.5 } action: { _, top in
+                ProjectFaces.shared.gridAtTop = top
+            }
             .onGeometryChange(for: Int.self) { geometry in
                 let room = geometry.size.width - Self.margin * 2
                 return max(1, Int((room + Self.gutter) / (Self.minCard + Self.gutter)))
             } action: { count in
-                withAnimation(.smooth(duration: 0.38)) { columns = count }
+                guard count != columns else { return }
+                Self.lastColumns = count
+                if laidOut {
+                    withAnimation(.smooth(duration: 0.38)) { columns = count }
+                } else {
+                    columns = count
+                }
             }
             .overlay(alignment: .bottom) {
                 ScrollEdge(edge: .bottom, height: 56, strength: 0.6).allowsHitTesting(false)
