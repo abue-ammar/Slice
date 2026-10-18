@@ -233,16 +233,23 @@ extension FrameRenderer {
         return (transform, mask, shadow, target, radius)
     }
 
+    static let cornerRectKernel = kernel("cornerRoundedRect", in: "CameraBlur", label: "Camera shape")
+
+    // Rounds every corner in one shape so the seam side straightens in step; a separate half-rect laid over the
+    // full shape bulged out as a lump while a circle morphed to or from a split.
     func seamedRect(_ rect: CGRect, radius: CGFloat, seam: Double, edge: CGRectEdge) -> CIImage {
-        let rounded = roundedRect(rect, radius: radius)
-        guard seam > 0.001, radius > 0.5 else { return rounded }
-        let half: CGRect = switch edge {
-        case .minXEdge: CGRect(x: rect.minX, y: rect.minY, width: rect.width / 2, height: rect.height)
-        case .maxXEdge: CGRect(x: rect.midX, y: rect.minY, width: rect.width / 2, height: rect.height)
-        case .minYEdge: CGRect(x: rect.minX, y: rect.midY, width: rect.width, height: rect.height / 2)
-        default: CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height / 2)
+        guard seam > 0.001, radius > 0.5, let kernel = Self.cornerRectKernel else { return roundedRect(rect, radius: radius) }
+        let r = max(0, min(radius, min(rect.width, rect.height) / 2))
+        let s = r * CGFloat(1 - min(seam, 1))
+        let radii: CIVector = switch edge {
+        case .minXEdge: CIVector(x: s, y: r, z: s, w: r)
+        case .maxXEdge: CIVector(x: r, y: s, z: r, w: s)
+        case .minYEdge: CIVector(x: r, y: r, z: s, w: s)
+        default: CIVector(x: s, y: s, z: r, w: r)
         }
-        return roundedRect(half, radius: radius * CGFloat(1 - seam)).composited(over: rounded)
+        let bounds = CIVector(x: rect.minX, y: rect.minY, z: rect.width, w: rect.height)
+        return kernel.apply(extent: rect.insetBy(dx: -1, dy: -1), roiCallback: { _, _ in .null },
+                            arguments: [bounds, radii]) ?? roundedRect(rect, radius: radius)
     }
 
     func cameraLayer(_ camera: CIImage, state: CameraState, style: FrameStyle, options: Options,
