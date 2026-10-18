@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ProjectCard: View {
     let bundle: ProjectBundle
+    var first = false
     let open: () -> Void
     let delete: () -> Void
     @State private var preview: ProjectPreview?
@@ -20,8 +21,22 @@ struct ProjectCard: View {
     @State private var peelStart: CGFloat?
     @State private var deleting = false
     @State private var swipe = HorizontalSwipe()
+    @ObservedObject private var faces = ProjectFaces.shared
+
+    init(bundle: ProjectBundle, first: Bool = false, open: @escaping () -> Void, delete: @escaping () -> Void) {
+        self.bundle = bundle
+        self.first = first
+        self.open = open
+        self.delete = delete
+        // A picture already made shows straight away; fading it in again left the card half drawn under the
+        // picture flying back into it.
+        let cached = ProjectPreviews.shared.cached(bundle.url)
+        _preview = State(initialValue: cached)
+        _loaded = State(initialValue: cached != nil)
+    }
 
     private static let radius: CGFloat = 12
+    static let hoverZoom: CGFloat = 1.025
     private static let opened: CGFloat = 0.4
     private static let openAt: CGFloat = 0.18
     private static let deleteAt: CGFloat = 0.72
@@ -30,6 +45,11 @@ struct ProjectCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             PeelEffect(progress: peel, cornerRadius: Self.radius) { face } underneath: { tray($0) }
+                .opacity(faces.hidden == bundle.url ? 0 : 1)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { rect in
+                    faces.moved(bundle.url, to: rect)
+                    if first, faces.gridAtTop { faces.measuredFirstCard(rect) }
+                }
             caption
                 .opacity(deleting ? 0 : 1)
         }
@@ -52,15 +72,19 @@ struct ProjectCard: View {
                 if peel > 0, !deleting { close() }
             }
         }
-        .onDisappear { swipe.stop() }
+        .onDisappear {
+            swipe.stop()
+            faces.gone(bundle.url)
+        }
         .animation(Theme.hover, value: hovering)
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .task(id: bundle.url) {
             let made = await ProjectPreviews.shared.preview(for: bundle)
-            withAnimation(.easeOut(duration: 0.25)) {
+            withAnimation(preview == nil ? .easeOut(duration: 0.25) : nil) {
                 preview = made
                 loaded = true
             }
+            faces.loaded(bundle.url, image: made?.image, aspect: made?.aspect ?? 16 / 10)
         }
     }
 
@@ -74,7 +98,7 @@ struct ProjectCard: View {
                     Image(decorative: image, scale: 1)
                         .resizable()
                         .aspectRatio(contentMode: (preview?.aspect ?? 1) >= 1.3 ? .fill : .fit)
-                        .scaleEffect(hovering ? 1.025 : 1)
+                        .scaleEffect(hovering ? Self.hoverZoom : 1)
                         .transition(.opacity)
                 } else if loaded {
                     Image(systemName: "video")
