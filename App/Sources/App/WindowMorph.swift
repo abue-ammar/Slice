@@ -24,23 +24,32 @@ enum WindowMorph {
 
     private static var running: [NSWindow] = []
 
+    /// Until the window is fully handed over, so the bar can be taken down after without holding up the morph.
+    static var total: Double { duration * 0.8 + handoff + 0.05 }
+
+    /// The bar is hidden at once and the surface takes its exact place, opaque, so it reads as the bar becoming the
+    /// window. The handoff is on Core Animation too: the window is shown under the opaque surface and the surface fades,
+    /// so a busy main thread (the window's first layout) can't hold the morph on an empty frame.
     static func reveal(_ window: NSWindow, from source: CGRect, radius: CGFloat) {
         let target = window.frame
         window.alphaValue = 0
-        window.makeKeyAndOrderFront(nil)
         let (overlay, surface) = makeOverlay(covering: source.union(target), rect: source, radius: radius)
         overlay.orderFrontRegardless()
-        fade(surface, from: 0, to: 1, duration: 0.12, timing: .easeOut)
-        move(surface, in: overlay, to: target, radius: windowRadius)
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration * 0.84) {
-            NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = handoff
-                ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
-                window.animator().alphaValue = 1
-                overlay.animator().alphaValue = 0
-            } completionHandler: {
-                finish(overlay)
+        if let bar = AppModel.captureBarWindow, bar.isVisible, bar.frame.intersects(source) {
+            bar.alphaValue = 0
+            bar.ignoresMouseEvents = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + total + 0.3) {
+                bar.alphaValue = 1
+                bar.ignoresMouseEvents = false
             }
+        }
+        move(surface, in: overlay, to: target, radius: windowRadius)
+        CATransaction.flush()
+        window.makeKeyAndOrderFront(nil)
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration * 0.8) {
+            window.alphaValue = 1
+            fade(surface, from: 1, to: 0, duration: handoff, timing: .easeOut)
+            DispatchQueue.main.asyncAfter(deadline: .now() + handoff + 0.03) { finish(overlay) }
         }
     }
 
@@ -105,7 +114,7 @@ enum WindowMorph {
 
     private static func makeOverlay(covering area: CGRect, rect: CGRect, radius: CGFloat) -> (NSWindow, CALayer) {
         let frame = area.insetBy(dx: -40, dy: -40)
-        let overlay = NSPanel(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        let overlay = MorphPanel(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         overlay.isOpaque = false
         overlay.backgroundColor = .clear
         overlay.hasShadow = false
@@ -136,4 +145,10 @@ enum WindowMorph {
         overlay.orderOut(nil)
         running.removeAll { $0 === overlay }
     }
+}
+
+/// An overlay macOS mustn't move: it pushed one that ran past the top of the screen down to fit, which put the surface
+/// off the bar it was meant to grow from.
+final class MorphPanel: NSPanel {
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
