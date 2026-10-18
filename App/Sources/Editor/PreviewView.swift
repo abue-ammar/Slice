@@ -117,7 +117,7 @@ final class PreviewNSView: NSView, CAMetalDisplayLinkDelegate {
         didSet { if quality != oldValue { updateDrawableSize() } }
     }
 
-    private let driver: PreviewDriver
+    let driver: PreviewDriver
     private let metalLayer = CAMetalLayer()
     private let commandQueue: MTLCommandQueue?
     private let context: CIContext
@@ -130,6 +130,16 @@ final class PreviewNSView: NSView, CAMetalDisplayLinkDelegate {
     private var spring = StyleSpring()
     private var source: PreviewSourceFrame?
     private var sourceCount = 0
+    private let shotLock = NSLock()
+    private var shot: (image: CIImage, size: CGSize)?
+    private var drewOnce = false
+    private(set) var hasDrawn = false
+    private var drawnWaiters: [() -> Void] = []
+
+    /// The editor's preview in the main window, for the screen hero to fly from and land on.
+    static weak var current: PreviewNSView?
+
+    var windowRect: CGRect { convert(bounds, to: nil) }
 
     private struct DrawKey: Equatable {
         var time: Double
@@ -171,7 +181,11 @@ final class PreviewNSView: NSView, CAMetalDisplayLinkDelegate {
         link?.invalidate()
         link = nil
         renderThread = nil
-        guard window != nil else { return }
+        guard window != nil else {
+            if Self.current === self { Self.current = nil }
+            return
+        }
+        Self.current = self
         updateDrawableSize()
         let l = CAMetalDisplayLink(metalLayer: metalLayer)
         l.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 120, preferred: 120)
@@ -196,6 +210,28 @@ final class PreviewNSView: NSView, CAMetalDisplayLinkDelegate {
     override func viewDidChangeBackingProperties() {
         super.viewDidChangeBackingProperties()
         updateDrawableSize()
+    }
+
+    /// The last frame shown, at most `width` pixels wide.
+    func snapshot(width: CGFloat = 1600) -> CGImage? {
+        guard let (image, size) = shotLock.withLock({ shot }), size.width > 0 else { return nil }
+        let k = min(1, width / size.width)
+        let out = CGRect(x: 0, y: 0, width: (size.width * k).rounded(), height: (size.height * k).rounded())
+        return context.createCGImage(image.cropped(to: CGRect(origin: .zero, size: size))
+            .transformed(by: CGAffineTransform(scaleX: k, y: k)), from: out,
+                                     format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB))
+    }
+
+    /// Runs `body` once the preview has put its first picture on screen.
+    func whenDrawn(_ body: @escaping () -> Void) {
+        if hasDrawn { body() } else { drawnWaiters.append(body) }
+    }
+
+    private func markDrawn() {
+        hasDrawn = true
+        let waiters = drawnWaiters
+        drawnWaiters = []
+        waiters.forEach { $0() }
     }
 
     private func updateDrawableSize() {
@@ -251,6 +287,11 @@ final class PreviewNSView: NSView, CAMetalDisplayLinkDelegate {
             _ = try? context.startTask(toRender: image, to: destination)
             commands.present(drawable)
             commands.commit()
+            shotLock.withLock { shot = (image, size) }
+            if !drewOnce {
+                drewOnce = true
+                DispatchQueue.main.async { [weak self] in self?.markDrawn() }
+            }
         }
     }
 }
