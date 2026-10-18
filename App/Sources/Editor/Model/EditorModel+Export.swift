@@ -59,6 +59,9 @@ extension EditorModel {
         pause()
         audition.stop()
         saveNow()
+        // Aiming a zoom shows the frame unzoomed, which a fresh open wouldn't: that frame isn't kept.
+        let preview = PreviewNSView.current.flatMap { $0.driver === previewDriver && !renderState.current().options.ignoreZoom ? $0 : nil }
+        ProjectPreviews.shared.keep(preview?.snapshot(), at: time, project: project, bundle: bundle)
         bundle.removeOrphanedClips(keeping: project)
         bundle.removeOrphanedAudio(keeping: project)
     }

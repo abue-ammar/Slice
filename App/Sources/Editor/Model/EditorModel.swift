@@ -156,7 +156,7 @@ final class EditorModel: ObservableObject {
 
     static let minBlock = 0.3
 
-    init(bundle: ProjectBundle, project: Project) {
+    init(bundle: ProjectBundle, project: Project, openAt: Double = 0) {
         self.bundle = bundle
         let opened = Self.withDeviceOpenings(project, catalog: DeviceManager.shared.catalog)
         self.project = opened
@@ -190,6 +190,7 @@ final class EditorModel: ObservableObject {
                 self.clock.isPlaying = false
                 self.invalidatePreview()
             }
+        clock.time = min(max(openAt, 0), duration)
         buildTask = Task { await rebuild() }
         loadTransitionStills()
         if project.voice.enhance { scheduleVoice(rebuildIfReady: false) }
