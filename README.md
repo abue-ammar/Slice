@@ -18,6 +18,10 @@
 <p align="center">
   <a href="https://www.buymeacoffee.com/rit3zh" target="_blank" title="Buy me a coffee"><img src="https://iili.io/JoQ1MeS.md.png" alt="Buy me a coffee" width="130"></a>
 </p>
+
+<p align="center">
+  <a href="https://www.producthunt.com/products/slice-5?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-slice-7" target="_blank" rel="noopener noreferrer"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1284128&amp;theme=light&amp;t=1792420172404" alt="Slice - A native macOS screen recorder and editor. | Product Hunt" width="250" height="54"></a>
+</p>
 </p>
 
 <br>
