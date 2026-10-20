@@ -14,7 +14,7 @@ export default function PostCard({ post, priority = false }: Props) {
 			href={post.url}
 			className="group/post grid grid-cols-[176px_minmax(0,1fr)] items-center gap-6 border-b border-line py-5 last:border-b-0 max-[560px]:grid-cols-1 max-[560px]:gap-3.5"
 		>
-			<span className="relative block aspect-[16/10] overflow-hidden rounded-[10px] bg-raised after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:inset-ring after:inset-ring-line-strong">
+			<span className="relative block aspect-video overflow-hidden rounded-[10px] bg-raised after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:inset-ring after:inset-ring-line-strong">
 				{cover && (
 					<Image
 						src={cover}

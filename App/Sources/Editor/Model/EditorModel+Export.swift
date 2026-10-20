@@ -42,6 +42,8 @@ extension EditorModel {
         p.zoomBlocks = p.zoomBlocks.compactMap { b in shift(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
         p.redactions = p.redactions.compactMap { b in shift(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
         p.spotlights = p.spotlights.compactMap { b in shift(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
+        p.annotations = p.annotations.filter { $0.clipID != id }
+            .compactMap { b in shift(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
         p.cuts.removeAll { $0.clipID == id }
         p.speeds.removeAll { $0.clipID == id }
         p.clips.remove(at: i)

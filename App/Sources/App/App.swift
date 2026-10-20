@@ -98,7 +98,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         launched = true
-        MainActor.assumeIsolated { DeviceManager.shared.start() }
+        MainActor.assumeIsolated {
+            DeviceManager.shared.start()
+            AnnotationController.shared.install()
+        }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

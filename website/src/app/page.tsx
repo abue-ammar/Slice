@@ -35,8 +35,8 @@ export default function Home() {
 				<Chapters />
 				<Faq />
 				<MacSection />
-				<End />
 			</main>
+			<End />
 		</>
 	);
 }

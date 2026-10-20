@@ -44,6 +44,7 @@ final class EditorModel: ObservableObject {
         case keyframe(UUID)
         case redact(UUID)
         case spotlight(UUID)
+        case annotation(UUID)
     }
 
     let bundle: ProjectBundle
@@ -60,6 +61,7 @@ final class EditorModel: ObservableObject {
                 revealSelectedLens()
                 revealSelectedRedaction()
                 revealSelectedSpotlight()
+                revealSelectedAnnotation()
             }
         }
     }
@@ -67,8 +69,12 @@ final class EditorModel: ObservableObject {
     let clock = PlaybackClock()
     var time: Double { clock.time }
     var isPlaying: Bool { clock.isPlaying }
-    @Published var playbackRate: Float = 1 {
-        didSet { if isPlaying, player.rate != 0 { player.rate = playbackRate } }
+    /// Preview speed, kept for next time.
+    @Published var playbackRate: Float = UserDefaults.standard.object(forKey: "playback.rate") as? Float ?? 1 {
+        didSet {
+            UserDefaults.standard.set(playbackRate, forKey: "playback.rate")
+            if isPlaying, player.rate != 0 { player.rate = playbackRate }
+        }
     }
     @Published var exportJob: ExportJob?
     var exportTask: Task<Void, Never>?
@@ -158,11 +164,12 @@ final class EditorModel: ObservableObject {
 
     init(bundle: ProjectBundle, project: Project, openAt: Double = 0) {
         self.bundle = bundle
-        let opened = Self.withDeviceOpenings(project, catalog: DeviceManager.shared.catalog)
+        let logs = bundle.loadCursorLogs(for: project)
+        let opened = Self.withImportedAnnotations(Self.withDeviceOpenings(project, catalog: DeviceManager.shared.catalog), logs: logs)
         self.project = opened
         if opened != project { try? bundle.save(opened) }
         let project = opened
-        cursorLogs = bundle.loadCursorLogs(for: project)
+        cursorLogs = logs
         cursorTrack = CursorTrack(project: project, logs: cursorLogs)
         renderState = RenderState(project: project, cursor: cursorTrack)
         previewDriver = PreviewDriver(renderState: renderState)

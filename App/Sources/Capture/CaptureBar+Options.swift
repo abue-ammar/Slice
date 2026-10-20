@@ -25,9 +25,9 @@ extension CaptureBar {
         .help("Microphone")
         .popover(isPresented: shown(.mic), arrowEdge: .top) {
             PickerList(title: "Microphone") {
-                PickerRow(title: "No microphone", selected: micID.isEmpty, symbol: "mic.slash") { micID = ""; picker = nil }
+                PickerRow(title: "No microphone", selected: micID.isEmpty, symbol: "mic.slash") { micID = ""; micChosen = true; picker = nil }
                 ForEach(mics, id: \.uniqueID) { m in
-                    PickerRow(title: m.localizedName, selected: micID == m.uniqueID, symbol: "mic") { micID = m.uniqueID; picker = nil }
+                    PickerRow(title: m.localizedName, selected: micID == m.uniqueID, symbol: "mic") { micID = m.uniqueID; micChosen = true; picker = nil }
                 }
             }
         }
@@ -55,9 +55,9 @@ extension CaptureBar {
         .help("Camera")
         .popover(isPresented: shown(.camera), arrowEdge: .top) {
             PickerList(title: "Camera") {
-                PickerRow(title: "No camera", selected: cameraID.isEmpty, symbol: "video.slash") { cameraID = ""; picker = nil }
+                PickerRow(title: "No camera", selected: cameraID.isEmpty, symbol: "video.slash") { cameraID = ""; cameraChosen = true; picker = nil }
                 ForEach(cameras, id: \.uniqueID) { c in
-                    PickerRow(title: c.localizedName, selected: cameraID == c.uniqueID, symbol: "video") { cameraID = c.uniqueID; picker = nil }
+                    PickerRow(title: c.localizedName, selected: cameraID == c.uniqueID, symbol: "video") { cameraID = c.uniqueID; cameraChosen = true; picker = nil }
                 }
             }
         }

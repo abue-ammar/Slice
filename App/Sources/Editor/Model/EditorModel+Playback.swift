@@ -188,7 +188,7 @@ extension EditorModel {
         var onCanvas = false
         if isEditingZoomFocus, let z = selectedZoom, z.kind != .liquidGlass { onCanvas = !(z.start ..< z.end).contains(time) }
         if onCanvas != aimsOnCanvas { aimsOnCanvas = onCanvas }
-        renderState.update(options: FrameRenderer.Options(ignoreZoom: onCanvas || isEditingRedaction || isEditingSpotlight))
+        renderState.update(options: FrameRenderer.Options(ignoreZoom: onCanvas || isEditingRedaction || isEditingSpotlight || isEditingAnnotation))
         invalidatePreview()
     }
 

@@ -52,6 +52,13 @@ struct TimelineView: View {
                     editor.addSpotlight(at: editor.time)
                 }
                 .frame(height: rowHeight)
+                if editor.hasAnnotations {
+                    GutterButton(symbol: AnnotationLane.symbol, hoverSymbol: "cursorarrow.click", help: "Select the drawing at the playhead") {
+                        editor.selectAnnotation(near: editor.time)
+                    }
+                    .frame(height: rowHeight)
+                    .transition(.opacity)
+                }
                 if editor.shows3DTrack {
                     GutterButton(symbol: "cube", hoverSymbol: "plus", help: "Add a 3D keyframe at the playhead") {
                         withAnimation(Theme.hover) { editor.addKeyframe(at: editor.time) }
@@ -116,6 +123,12 @@ struct TimelineView: View {
                             }
                             track(.spotlight, pps: pps, empty: editor.project.spotlights.isEmpty) {
                                 SpotlightLane(editor: editor, pps: pps, height: rowHeight)
+                            }
+                            if editor.hasAnnotations {
+                                track(.annotate, pps: pps, empty: false) {
+                                    AnnotationLane(editor: editor, pps: pps, height: rowHeight)
+                                }
+                                .transition(.opacity)
                             }
                             if editor.shows3DTrack {
                                 KeyframeLane(editor: editor, pps: pps, height: rowHeight)

@@ -49,6 +49,8 @@ final class Recorder: NSObject, @unchecked Sendable {
     var micSilence: [UUID: Bool] = [:]
     var cursorSaver: Timer?
     var savingCursor = false
+    /// What's been drawn over the screen, for a capture rect; read on the main thread.
+    var annotations: (@MainActor (CGRect) -> [Annotation])?
     let cursorQueue = DispatchQueue(label: "recorder.cursor", qos: .utility)
 
     init(settings: Settings, bundle: ProjectBundle) {
@@ -171,7 +173,8 @@ final class Recorder: NSObject, @unchecked Sendable {
             take = nil
             return w
         }
-        let log = cursor.stop()
+        var log = cursor.stop()
+        if let rect = target?.rect, let annotations { log.annotations = await MainActor.run { annotations(rect) } }
         if deviceLostAt != nil { deviceDropped = true }
         deviceLostAt = nil
         guard let writer, let target else { return nil }

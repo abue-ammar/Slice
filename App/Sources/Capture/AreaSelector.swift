@@ -11,7 +11,7 @@ import AppKit
 final class AreaOverlay: ObservableObject {
     static let shared = AreaOverlay()
 
-    enum Shape: CaseIterable, Identifiable {
+    enum Shape: String, CaseIterable, Identifiable {
         case free, widescreen, standard, square, vertical
 
         var id: Self { self }
@@ -49,9 +49,30 @@ final class AreaOverlay: ObservableObject {
 
     enum Mode { case hidden, editing, recording }
 
-    @Published private(set) var displayID: CGDirectDisplayID?
-    @Published private(set) var local: CGRect?
-    @Published private(set) var shape: Shape = .free
+    /// The last area picked, its display and its shape are kept for next time; a display that's gone drops it.
+    @Published private(set) var displayID: CGDirectDisplayID? {
+        didSet { UserDefaults.standard.set(displayID.map { Int($0) }, forKey: Self.displayKey) }
+    }
+    @Published private(set) var local: CGRect? {
+        didSet { UserDefaults.standard.set(local.map(NSStringFromRect), forKey: Self.rectKey) }
+    }
+    @Published private(set) var shape: Shape = .free {
+        didSet { UserDefaults.standard.set(shape.rawValue, forKey: Self.shapeKey) }
+    }
+
+    private static let displayKey = "setup.area.display"
+    private static let rectKey = "setup.area.rect"
+    private static let shapeKey = "setup.area.shape"
+
+    private init() {
+        let d = UserDefaults.standard
+        shape = d.string(forKey: Self.shapeKey).flatMap(Shape.init) ?? .free
+        if let id = d.object(forKey: Self.displayKey) as? Int, let rect = d.string(forKey: Self.rectKey).map(NSRectFromString),
+           rect.width > 0, rect.height > 0, NSScreen.screens.contains(where: { $0.displayID == CGDirectDisplayID(id) }) {
+            displayID = CGDirectDisplayID(id)
+            local = rect
+        }
+    }
     @Published private(set) var drawing = false
 
     private var mode: Mode = .hidden

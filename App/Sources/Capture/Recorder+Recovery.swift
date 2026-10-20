@@ -26,7 +26,9 @@ extension Recorder {
         guard !savingCursor, let writer = queue.sync(execute: { take }), let start = queue.sync(execute: { writer.startTime })
         else { return }
         savingCursor = true
-        let snapshot = cursor.snapshot, url = writer.cursorURL
+        var snapshot = cursor.snapshot
+        let url = writer.cursorURL
+        if let rect = target?.rect, let annotations { snapshot.annotations = MainActor.assumeIsolated { annotations(rect) } }
         cursorQueue.async { [weak self] in
             if let data = try? JSONEncoder().encode(snapshot.log(since: start.seconds)) { try? data.write(to: url, options: .atomic) }
             DispatchQueue.main.async { self?.savingCursor = false }

@@ -29,9 +29,10 @@ public struct CursorLog: Codable, Equatable {
     public var scrolls: [Sample]
     public var typing: [Double]
     public var hits: [KeyHit]
+    public var annotations: [Annotation]
 
     public init(samples: [Sample] = [], clicks: [Sample] = [], types: [TypeChange] = [], keys: [KeyPress] = [],
-                scrolls: [Sample] = [], typing: [Double] = [], hits: [KeyHit] = []) {
+                scrolls: [Sample] = [], typing: [Double] = [], hits: [KeyHit] = [], annotations: [Annotation] = []) {
         self.samples = samples
         self.clicks = clicks
         self.types = types
@@ -39,6 +40,7 @@ public struct CursorLog: Codable, Equatable {
         self.scrolls = scrolls
         self.typing = typing
         self.hits = hits
+        self.annotations = annotations
     }
 
     public var keyHits: [KeyHit] {
@@ -56,5 +58,6 @@ public struct CursorLog: Codable, Equatable {
         scrolls = try c.decodeIfPresent([Sample].self, forKey: .scrolls) ?? []
         typing = try c.decodeIfPresent([Double].self, forKey: .typing) ?? []
         hits = try c.decodeIfPresent([KeyHit].self, forKey: .hits) ?? []
+        annotations = try c.decodeIfPresent([Annotation].self, forKey: .annotations) ?? []
     }
 }

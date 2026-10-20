@@ -11,15 +11,17 @@ import SwiftUI
 enum BarStage: Equatable {
     case setup
     case countdown(Int)
-    case live
+    case live(canDraw: Bool)
+    case drawing
     case saving
 
-    init(phase: RecordingController.Phase?) {
+    /// `annotating` is nil when the recording can't be drawn on.
+    init(phase: RecordingController.Phase?, annotating: Bool? = nil) {
         switch phase {
         case nil: self = .setup
         case .preparing: self = .countdown(3)
         case let .countdown(n): self = .countdown(n)
-        case .recording, .paused: self = .live
+        case .recording, .paused: self = annotating == true ? .drawing : .live(canDraw: annotating != nil)
         case .finishing: self = .saving
         }
     }
@@ -28,7 +30,9 @@ enum BarStage: Equatable {
         switch self {
         case .setup: nil
         case .countdown: CGSize(width: 112, height: 72)
-        case .live, .saving: CGSize(width: 72, height: 72)
+        case let .live(canDraw): CGSize(width: canDraw ? LiveBar.liveWidth : 72, height: 72)
+        case .drawing: CGSize(width: LiveBar.drawingWidth, height: 72)
+        case .saving: CGSize(width: 72, height: 72)
         }
     }
 }

@@ -49,6 +49,7 @@ final class RecordingController: ObservableObject {
 
     var captureSession: AVCaptureSession? { recorder?.captureSession }
     var hasCamera: Bool { settings.cameraID != nil }
+    var isDevice: Bool { if case .device = settings.source { true } else { false } }
 
     init(settings: Recorder.Settings, editor: EditorModel?, onFinish: @escaping (Result<EditorModel?, Error>) -> Void) {
         self.settings = settings
@@ -71,6 +72,12 @@ final class RecordingController: ObservableObject {
                 }
                 let recorder = Recorder(settings: settings, bundle: bundle!)
                 recorder.onInterrupted = { [weak self] reason in self?.interrupted(reason) }
+                let drawing = AnnotationController.shared
+                drawing.recordingStarted(device: isDevice)
+                if !isDevice {
+                    recorder.annotations = { rect in drawing.session.recorded(in: rect) }
+                    recorder.cursor.ignoresKey = { event in MainActor.assumeIsolated { drawing.swallows(event) } }
+                }
                 self.recorder = recorder
                 try await recorder.prepare()
                 // Keep macOS from quitting or suspending us while no app window is visible.
@@ -94,6 +101,7 @@ final class RecordingController: ObservableObject {
                 }
                 try beginTake()
             } catch {
+                AnnotationController.shared.recordingEnded()
                 await recorder?.shutdown()
                 cleanUpEmptyNewProject()
                 finishSession()
@@ -126,10 +134,12 @@ final class RecordingController: ObservableObject {
         guard phase == .recording || phase == .paused else { return }
         let wasRecording = phase == .recording
         phase = .finishing
+        AnnotationController.shared.recordingStopping()
         Task {
             if wasRecording { await endTake() }
             deviceDropped = recorder?.deviceDropped ?? false
             await recorder?.shutdown()
+            AnnotationController.shared.recordingEnded()
             finishSession()
             guard let bundle, let project, !project.clips.isEmpty else {
                 cleanUpEmptyNewProject()

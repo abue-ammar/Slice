@@ -70,6 +70,7 @@ struct SelectionInspector: View {
         case .keyframe: "3D keyframe"
         case .redact: "Blur"
         case .spotlight: "Spotlight"
+        case .annotation: "Drawing"
         case nil: ""
         }
     }
@@ -84,6 +85,7 @@ struct SelectionInspector: View {
         case .keyframe: "diamond"
         case .redact: "eye.slash"
         case .spotlight: SpotlightLane.symbol
+        case .annotation: AnnotationLane.symbol
         case .section, nil: "film"
         }
     }
@@ -97,6 +99,7 @@ struct SelectionInspector: View {
         case .keyframe: Theme.phone
         case .redact: Theme.privacy
         case .spotlight: Theme.spotlight
+        case .annotation: Theme.annotation
         case .section, nil: Theme.clip
         }
     }
@@ -155,6 +158,8 @@ struct SelectionInspector: View {
             if let block = editor.selectedRedaction { RedactInspector(editor: editor, block: block) }
         case .spotlight:
             if let block = editor.selectedSpotlight { SpotlightInspector(editor: editor, block: block) }
+        case .annotation:
+            if let block = editor.selectedAnnotation { AnnotationInspector(editor: editor, block: block) }
         case nil:
             EmptyView()
         }

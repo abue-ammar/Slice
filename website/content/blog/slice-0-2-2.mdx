@@ -1,0 +1,66 @@
+---
+title: Introducing Annotations
+description: Slice 0.2.2 lets you draw on your screen while you record, then move, restyle and retime every mark in the editor.
+date: 2026-10-20T07:00:00Z
+cover: /media/slice-0-2-2.jpg
+---
+
+<Figure src="/media/slice-0-2-2.jpg" alt="Introducing Annotations in Slice 0.2.2" />
+
+Slice 0.2.2 is out, and it adds the thing I've been asked for most since 0.1: annotations. You can now draw on your screen while you record, and everything you draw lands on the timeline, where you can change it like any other block. Slice is still free, there's still no account, and everything still stays on your Mac.
+
+## Why annotations
+
+When you explain something on a call, you point at it. You circle the button, underline the number, draw an arrow to the field that matters. A recording should let you do the same, and do it in the moment, not ten minutes later in the editor.
+
+Spotlight already says "look here". Annotations let you say *why*.
+
+## Draw while you record
+
+Press **⌥A** from any app to start drawing over your screen. Press it again, or **esc**, to stop. You can draw before you hit Record, too, and those marks are in the take from its very first frame.
+
+There are seven tools, each on its own key, so you never have to reach for the bar:
+
+- **Pen** (P) for anything freehand: circles, ticks, quick sketches.
+- **Highlighter** (H) to mark up text without hiding it.
+- **Line** (L) and **Arrow** (A) to point from one thing to another.
+- **Rectangle** (R) and **Oval** (O) to frame part of the screen.
+- **Text** (T) for a short label right where you need it.
+
+Pick from six colours and three thicknesses in the capture bar, or right-click the screen while you're drawing. **⌘Z** undoes the last mark and **⌘⌫** clears them all. When you stop drawing, your marks stay on screen and your clicks go straight through to the app underneath, so you can carry on with the demo while the arrow keeps pointing.
+
+Drawing works across every display, and marks stay on whatever they were drawn over, even if you plug in a monitor halfway through.
+
+## Mark it up while you edit
+
+Every mark you drew shows up on its own lane in the timeline, from the moment you started drawing it until you undid it, cleared it or the take ended. Click one, and you can:
+
+- **Move and resize it.** Drag it in the preview to move it, or drag its corners to resize it.
+- **Restyle it.** Change its colour, thickness and opacity. For text, edit the words and the size.
+- **Retime it.** Drag its edges on the timeline to change when it appears and when it goes.
+- **Choose how it appears.** By default a mark draws itself in, stroke by stroke, exactly as you drew it. Turn off **Draw it in as it was drawn** to have it appear all at once.
+- **Delete it.** Press Delete, and **⌘Z** brings it back.
+
+Your edits are made to a copy of the mark, so the recording itself is never changed. Draw something messy during a take, tidy it up afterwards, and nobody will ever know.
+
+Annotations move with your video, too. They follow zooms, tilts and the lens like the rest of the frame, and they're in every export: video, GIF and all three shapes at once.
+
+## Make the shortcut yours
+
+⌥A not working for you? Go to **Settings › General › Shortcuts**, click the shortcut and press the keys you want. It needs ⌘, ⌥ or ⌃, so normal typing never sets it off, and Slice remembers it across launches.
+
+## Install or update
+
+Run this in Terminal:
+
+```bash
+curl -fsSL https://slice.rit3zh.dev/install.sh | bash
+```
+
+Or [download Slice.dmg](https://github.com/rit3zh/slice/releases/latest) and drag Slice to Applications. If macOS says it can't verify Slice, click **Done**, then go to **System Settings › Privacy & Security** and click **Open Anyway**. You only need to do this once.
+
+Slice needs macOS 15 or later on Apple silicon.
+
+## What's next
+
+The [roadmap](/roadmap) shows what I'm working on next. If annotations don't work the way you expected, or there's a tool you wish was there, [open an issue](https://github.com/rit3zh/slice/issues/new) and tell me. Every report so far has made Slice better.

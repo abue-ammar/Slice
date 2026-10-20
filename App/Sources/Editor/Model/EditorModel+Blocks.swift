@@ -10,7 +10,7 @@ import SliceCore
 import SwiftUI
 
 extension EditorModel {
-    enum TimelineLane { case camera, zoom, blur, spotlight, music }
+    enum TimelineLane { case camera, zoom, blur, spotlight, annotate, music }
 
     func gap(around t: Double, in ranges: [(id: UUID, start: Double, end: Double)], excluding: UUID? = nil) -> ClosedRange<Double> {
         let others = ranges.filter { $0.id != excluding }
@@ -38,6 +38,8 @@ extension EditorModel {
             guard length >= Self.minBlock else { return nil }
             let start = max(min(t, space.upperBound - length), space.lowerBound)
             return start ... start + length
+        case .annotate:
+            return nil
         case .music:
             guard focusedMusic != nil || !Self.libraryTracks.isEmpty,
                   !project.music.contains(where: { $0.timelineRange(duration: duration)?.contains(t + 0.001) ?? false })
@@ -55,6 +57,7 @@ extension EditorModel {
         case .zoom: addZoomBlock(at: t)
         case .blur: addRedaction(at: t)
         case .spotlight: addSpotlight(at: t)
+        case .annotate: selectAnnotation(near: t)
         case .music: Task { await addMusicClip(at: t) }
         }
     }
@@ -149,6 +152,7 @@ extension EditorModel {
         case let .keyframe(id): project.device3D.keyframes.removeAll { $0.id == id }
         case let .redact(id): project.redactions.removeAll { $0.id == id }
         case let .spotlight(id): project.spotlights.removeAll { $0.id == id }
+        case let .annotation(id): project.annotations.removeAll { $0.id == id }
         case nil: return
         }
         selection = nil

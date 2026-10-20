@@ -21,6 +21,9 @@ struct CaptureBar: View {
     @AppStorage("setup.kind") var kind: Kind = .display
     @AppStorage("setup.camera") var cameraID = ""
     @AppStorage("setup.mic") var micID = ""
+    /// Picked by hand, "None" included: kept as it is next time instead of falling back to the first device.
+    @AppStorage("setup.cameraChosen") var cameraChosen = false
+    @AppStorage("setup.micChosen") var micChosen = false
     @AppStorage("setup.frameRate") var fps = Recorder.Settings.best
     @AppStorage("setup.screenAudio") var screenAudio = true
     @AppStorage("setup.keys") var keys = true
@@ -65,7 +68,8 @@ struct CaptureBar: View {
             .disabled(compact)
             .background(MorphSurface(size: stage.surfaceSize))
             .overlay { stageContent }
-            .animation(.spring(response: 0.5, dampingFraction: 0.68), value: stage)
+            .animation(stage == .drawing || stage == .live(canDraw: true) ? LiveBar.expand : .spring(response: 0.5, dampingFraction: 0.68),
+                       value: stage)
             .padding(Bar.inset)
             .environment(\.colorScheme, .dark)
             .scaleEffect(appeared ? 1 : 0.97, anchor: .bottom)
@@ -153,8 +157,13 @@ struct CaptureBar: View {
             if kind == .area, areaOverlay.area == nil { kind = .display }
             await loadWindows()
             captureDevices.refresh()
-            if !cameras.contains(where: { $0.uniqueID == cameraID }) { cameraID = cameras.first?.uniqueID ?? "" }
-            if !mics.contains(where: { $0.uniqueID == micID }) { micID = AVCaptureDevice.default(for: .audio)?.uniqueID ?? "" }
+            // Off stays off. Only a first run, or a picked device that's been unplugged, falls back to what's there.
+            if !(cameraChosen && cameraID.isEmpty), !cameras.contains(where: { $0.uniqueID == cameraID }) {
+                cameraID = cameras.first?.uniqueID ?? ""
+            }
+            if !(micChosen && micID.isEmpty), !mics.contains(where: { $0.uniqueID == micID }) {
+                micID = AVCaptureDevice.default(for: .audio)?.uniqueID ?? ""
+            }
         }
     }
 
@@ -169,7 +178,7 @@ struct CaptureBar: View {
     }
 
     var stage: BarStage {
-        model.recordingPhase == nil && starting ? .countdown(3) : BarStage(phase: model.recordingPhase)
+        model.recordingPhase == nil && starting ? .countdown(3) : BarStage(phase: model.recordingPhase, annotating: model.annotating)
     }
 
     @ViewBuilder var stageContent: some View {
@@ -185,8 +194,10 @@ struct CaptureBar: View {
                     .contentTransition(.numericText(countsDown: true))
                     .animation(.spring(response: 0.42, dampingFraction: 0.62), value: n)
                     .transition(.stageContent)
-            case .live:
-                StopButton { model.recording?.stop() }
+            case .live, .drawing:
+                LiveBar(drawing: stage == .drawing, session: model.annotating == nil ? nil : AnnotationController.shared.session) {
+                    model.recording?.stop()
+                }
                     .transition(.stageContent)
             case .saving:
                 ProgressView()

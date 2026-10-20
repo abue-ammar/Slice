@@ -1,10 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import StepPlayer from "./step-player";
 
 type Clip = { id: string; label: string; src: string; poster: string; alt: string; rest: number };
 
 const CLIPS: Clip[] = [
+	{
+		id: "annotations",
+		label: "Annotations",
+		src: "/media/annotations.mp4",
+		poster: "/media/annotations.jpg",
+		alt: "The Slice README on GitHub being marked up while recording: a red pen scribble, a box around the Product Hunt badge and an arrow pointing at the title, as the view zooms in.",
+		rest: 0,
+	},
 	{
 		id: "editor",
 		label: "Editor",
@@ -35,36 +44,55 @@ const add = (set: Set<number>, ...items: number[]) => (items.every((i) => set.ha
 
 export default function HeroShowcase() {
 	const [active, setActive] = useState(0);
+	const [playing, setPlaying] = useState(true);
 	const [loaded, setLoaded] = useState(() => new Set([0]));
 	const stage = useRef<HTMLDivElement>(null);
 	const videos = useRef<(HTMLVideoElement | null)[]>([]);
-	const fills = useRef<(HTMLSpanElement | null)[]>([]);
-	const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+	const progress = useRef(0);
+	const on = useRef(true);
+	const visible = useRef(false);
 
-	const select = (i: number) => {
+	const peek = (i: number) => setLoaded((s) => add(s, i));
+
+	const pick = (i: number) => {
+		on.current = true;
+		setPlaying(true);
 		setLoaded((s) => add(s, i, (i + 1) % CLIPS.length));
 		setActive(i);
 	};
 
+	const toggle = () => {
+		on.current = !on.current;
+		setPlaying(on.current);
+		const video = videos.current[active];
+		if (!video) return;
+		if (on.current && visible.current && !video.ended) video.play().catch(() => {});
+		else video.pause();
+	};
+
 	useEffect(() => {
-		const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+		if (!matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+		on.current = false;
+		setPlaying(false);
+	}, []);
+
+	useEffect(() => {
 		const video = videos.current[active];
 		videos.current.forEach((v, i) => i !== active && v?.pause());
-		fills.current.forEach((f) => f && (f.style.transform = `scaleX(${still ? 1 : 0})`));
-		if (!video || !stage.current || still) return;
+		progress.current = 0;
+		if (!video || !stage.current) return;
 
 		video.currentTime = 0;
-		let visible = false;
 		let rested = 0;
 		let last = performance.now();
 		let frame = 0;
 
 		const observer = new IntersectionObserver(
 			([e]) => {
-				visible = e.isIntersecting;
-				if (visible && !video.ended) video.play().catch(() => {});
+				visible.current = e.isIntersecting;
+				if (visible.current && on.current && !video.ended) video.play().catch(() => {});
 				else video.pause();
-				if (visible) setLoaded((s) => add(s, (active + 1) % CLIPS.length));
+				if (visible.current) setLoaded((s) => add(s, (active + 1) % CLIPS.length));
 			},
 			{ threshold: 0.15 },
 		);
@@ -75,11 +103,9 @@ export default function HeroShowcase() {
 			last = now;
 			const duration = video.duration;
 			if (Number.isFinite(duration) && duration > 0) {
-				if (video.ended && visible) rested += dt;
-				const progress = Math.min(1, (video.ended ? duration + rested : video.currentTime) / (duration + CLIPS[active].rest));
-				const fill = fills.current[active];
-				if (fill) fill.style.transform = `scaleX(${progress})`;
-				if (progress >= 1) {
+				if (video.ended && visible.current && on.current) rested += dt;
+				progress.current = Math.min(1, (video.ended ? duration + rested : video.currentTime) / (duration + CLIPS[active].rest));
+				if (progress.current >= 1) {
 					const next = (active + 1) % CLIPS.length;
 					setLoaded((s) => add(s, next, (next + 1) % CLIPS.length));
 					setActive(next);
@@ -96,22 +122,11 @@ export default function HeroShowcase() {
 		};
 	}, [active]);
 
-	const onKey = (e: KeyboardEvent) => {
-		const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-		if (!d) return;
-		e.preventDefault();
-		const i = (active + d + CLIPS.length) % CLIPS.length;
-		select(i);
-		tabs.current[i]?.focus();
-	};
-
 	return (
 		<>
 			<div
 				ref={stage}
 				id="hero-stage"
-				role="tabpanel"
-				aria-labelledby={`hero-tab-${CLIPS[active].id}`}
 				className="scroll-settle relative aspect-[16/10] origin-top overflow-hidden rounded-[20px] bg-black ring-1 ring-line will-change-transform max-[520px]:rounded-xl"
 			>
 				{CLIPS.map((c, i) => (
@@ -134,36 +149,19 @@ export default function HeroShowcase() {
 				))}
 			</div>
 
-			<div role="tablist" aria-label="What Slice can do" className="mx-auto mt-5 grid max-w-[27rem] grid-cols-3 gap-[clamp(12px,3vw,24px)]">
-				{CLIPS.map((c, i) => (
-					<button
-						key={c.id}
-						ref={(el) => {
-							tabs.current[i] = el;
-						}}
-						id={`hero-tab-${c.id}`}
-						type="button"
-						role="tab"
-						aria-selected={i === active}
-						aria-controls="hero-stage"
-						tabIndex={i === active ? 0 : -1}
-						onClick={() => i !== active && select(i)}
-						onPointerEnter={() => setLoaded((s) => add(s, i))}
-						onKeyDown={onKey}
-						className="flex w-full cursor-pointer flex-col gap-2.5 pt-1 text-[13.5px] leading-[1.3] font-medium text-balance text-faint transition-colors duration-300 ease-quart hover:text-muted aria-selected:text-fg"
-					>
-						<span className="block h-0.5 w-full overflow-hidden rounded-full bg-line-strong">
-							<span
-								ref={(el) => {
-									fills.current[i] = el;
-								}}
-								style={{ transform: "scaleX(0)" }}
-								className={`block h-full origin-left rounded-full bg-fg transition-opacity duration-300 ${i === active ? "opacity-100" : "opacity-0"}`}
-							/>
-						</span>
-						{c.label}
-					</button>
-				))}
+			<div className="mt-5 flex flex-col items-center gap-3">
+				<StepPlayer
+					labels={CLIPS.map((c) => c.label)}
+					at={active}
+					playing={playing}
+					progress={progress}
+					onPick={pick}
+					onPeek={peek}
+					onToggle={toggle}
+				/>
+				<p key={active} className="blur-in text-[13.5px] font-medium text-muted [--i:0]" aria-live="polite">
+					{CLIPS[active].label}
+				</p>
 			</div>
 		</>
 	);

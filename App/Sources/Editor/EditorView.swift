@@ -54,8 +54,9 @@ struct EditorView: View {
             .padding(.top, 8)
             .padding(.bottom, 10)
             TimelineView(editor: editor, zoom: $timelineZoom)
-                .frame(height: editor.shows3DTrack ? 380 : 334)
+                .frame(height: 334 + (editor.shows3DTrack ? 46 : 0) + (editor.hasAnnotations ? 46 : 0))
                 .animation(Theme.slide, value: editor.shows3DTrack)
+                .animation(Theme.slide, value: editor.hasAnnotations)
         }
         .overlay {
             CommandPaletteLayer(isPresented: showPalette, commands: commands, close: { showPalette = false }) { cmd in
@@ -190,6 +191,12 @@ struct EditorView: View {
                           keywords: "redact pixelate hide privacy") { editor.addRedaction(at: editor.time) },
             EditorCommand(id: "addspotlight", title: "Add spotlight at playhead", symbol: SpotlightLane.symbol, group: .timeline,
                           keywords: "focus highlight dim blur circle") { editor.addSpotlight(at: editor.time) },
+            EditorCommand(id: "draw", title: AnnotationController.shared.session.isActive ? "Stop drawing on screen" : "Draw on screen",
+                          detail: "Before or while recording", symbol: AnnotationLane.symbol, group: .view,
+                          keys: AnnotationController.toggleKeys, keywords: "annotate annotation pen marker highlight arrow markup",
+                          enabled: AnnotationController.shared.isAvailable) { AnnotationController.shared.toggleDrawing() },
+            EditorCommand(id: "selectdrawing", title: "Select drawing at playhead", symbol: AnnotationLane.symbol, group: .timeline,
+                          keywords: "annotation markup pen arrow", enabled: editor.hasAnnotations) { editor.selectAnnotation(near: editor.time) },
             EditorCommand(id: "addzoom", title: "Add zoom at playhead", symbol: "plus.magnifyingglass", group: .timeline,
                           keywords: "block") { editor.addZoomBlock(at: editor.time) },
             EditorCommand(id: "addcamera", title: "Add camera layout at playhead", symbol: "person.crop.rectangle",

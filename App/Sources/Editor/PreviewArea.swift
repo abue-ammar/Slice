@@ -64,6 +64,7 @@ struct PreviewHeader: View {
         case .transition: "Drag its edges to change the length. Delete removes it."
         case .keyframe: "Pose the phone in the preview. Drag the keyframe to retime it. Delete removes it."
         case .redact: "Drag the box over what to hide. Delete removes it."
+        case .annotation: "Drag the drawing to move it, its corners to resize. Delete removes it."
         case .spotlight: editor.selectedSpotlight?.followsPointer == true ? "The spotlight follows the pointer. Delete removes it."
             : "Drag the circle onto what to light, its edge to resize. Delete removes it."
         case nil: editor.wordSelection != nil ? "Delete cuts the selected words. ⌘Z undoes."
@@ -86,6 +87,13 @@ struct PreviewArea: View {
             .aspectRatio(size, contentMode: .fit)
             .overlay {
                 GeometryReader { geo in
+                    // Underneath the other overlays, so their own drags and taps come first.
+                    if editor.hasAnnotations, editor.selection == nil || editor.selectedAnnotation != nil {
+                        AnnotationTapCatcher(editor: editor, viewSize: geo.size)
+                    }
+                    if editor.isEditingAnnotation, let block = editor.selectedAnnotation {
+                        AnnotationBoxOverlay(editor: editor, block: block, viewSize: geo.size)
+                    }
                     if editor.handlesPhoneInPreview(tab: inspectorTab) {
                         Device3DPoseOverlay(editor: editor)
                     }

@@ -91,10 +91,36 @@ struct BarWindowConfigurator: NSViewRepresentable {
             window.isOpaque = false
             window.backgroundColor = .clear
             window.hasShadow = false
-            window.level = .floating
+            window.level = AnnotationController.shared.barLevel
             window.isMovableByWindowBackground = true
             window.collectionBehavior.formUnion([.canJoinAllSpaces, .fullScreenAuxiliary])
             window.appearance = NSAppearance(named: .darkAqua)
+            BarPosition.restore(window)
+        }
+    }
+}
+
+/// Where the bar was last dragged to, so it opens there again. Placed after SwiftUI's own placement has run, and
+/// only if that spot is still on a display.
+@MainActor
+enum BarPosition {
+    private static let key = "captureBar.center"
+    private static var watch: NSObjectProtocol?
+
+    static func restore(_ window: NSWindow) {
+        DispatchQueue.main.async {
+            if let saved = UserDefaults.standard.string(forKey: key).map(NSPointFromString),
+               NSScreen.screens.contains(where: { $0.visibleFrame.contains(saved) }) {
+                window.setFrameOrigin(NSPoint(x: saved.x - window.frame.width / 2, y: saved.y - window.frame.height / 2))
+            }
+            watch.map(NotificationCenter.default.removeObserver)
+            // Only the user moves the bar; drags arrive as moves while it's on screen.
+            watch = NotificationCenter.default.addObserver(forName: NSWindow.didMoveNotification, object: window, queue: .main) { note in
+                MainActor.assumeIsolated {
+                    guard let w = note.object as? NSWindow, w.isVisible else { return }
+                    UserDefaults.standard.set(NSStringFromPoint(NSPoint(x: w.frame.midX, y: w.frame.midY)), forKey: key)
+                }
+            }
         }
     }
 }

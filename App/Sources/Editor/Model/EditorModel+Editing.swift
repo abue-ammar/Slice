@@ -38,6 +38,7 @@ extension EditorModel {
             c.hoverMoments = nil
             c.speech = nil
             c.transcriptFile = nil
+            c.annotationsImported = nil
             return c
         }
     }
@@ -142,6 +143,7 @@ extension EditorModel {
     func appendRecordedClips(from recorded: Project) {
         let warm = !project.hasDeviceRecording && recorded.hasDeviceRecording
         project.clips = recorded.clips
+        importAnnotations()
         if warm { warmUp3D() }
         saveNow()
         scanCameraGlitches()

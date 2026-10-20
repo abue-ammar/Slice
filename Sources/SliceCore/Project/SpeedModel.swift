@@ -108,5 +108,6 @@ extension Project {
         zoomBlocks = zoomBlocks.compactMap { b in span(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
         redactions = redactions.compactMap { b in span(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
         spotlights = spotlights.compactMap { b in span(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
+        annotations = annotations.compactMap { b in span(b.start, b.end).map { var b = b; (b.start, b.end) = $0; return b } }
     }
 }

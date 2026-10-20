@@ -103,7 +103,7 @@ extension CaptureBar {
         guard kind == .area, areaOverlay.area != nil else { return .hidden }
         return switch stage {
         case .setup: .editing
-        case .countdown, .live: .recording
+        case .countdown, .live, .drawing: .recording
         case .saving: .hidden
         }
     }

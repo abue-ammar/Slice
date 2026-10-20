@@ -19,6 +19,7 @@ final class CursorLogger {
         var scrolls: [CursorLog.Sample] = []
         var typing: [Double] = []
         var hits: [KeyHit] = []
+        var annotations: [Annotation] = []
 
         /// The log as saved with a take, timed from its start (host-clock seconds).
         func log(since start: Double) -> CursorLog {
@@ -28,7 +29,8 @@ final class CursorLogger {
                       keys: keys.map { KeyPress(t: $0.t - start, modifiers: $0.modifiers, key: $0.key) },
                       scrolls: scrolls.map { .init(t: $0.t - start, x: $0.x, y: $0.y) },
                       typing: typing.map { $0 - start },
-                      hits: hits.map { KeyHit(t: $0.t - start, kind: $0.kind) })
+                      hits: hits.map { KeyHit(t: $0.t - start, kind: $0.kind) },
+                      annotations: annotations.compactMap { $0.since(start) })
         }
     }
 
@@ -46,6 +48,8 @@ final class CursorLogger {
     private lazy var classifier = SystemCursorClassifier()
     private var deviceWindowsInPicture = false
     private var analysis: LiveTakeAnalyzer?
+    /// Keys that aren't part of what's recorded, such as Slice's own shortcuts.
+    var ignoresKey: ((NSEvent) -> Bool)?
 
     func start(globalRect: CGRect, mapping: Mapping? = nil, keys: Bool = false, deviceWindowsInPicture: Bool = false,
                analysis: LiveTakeAnalyzer? = nil) {
@@ -92,6 +96,7 @@ final class CursorLogger {
         let p = NSEvent.mouseLocation
         return NSApp.windows.contains { window in
             window.isVisible && !window.isMiniaturized && !window.ignoresMouseEvents && window.frame.contains(p)
+                && !(window is AnnotationCanvasPanel)
                 && !(deviceWindowsInPicture && MainActor.assumeIsolated { DeviceWindowController.isDeviceWindow(window) })
         }
     }
@@ -162,7 +167,7 @@ final class CursorLogger {
     }
 
     private func logKey(_ event: NSEvent, at t: Double) {
-        guard !event.isARepeat else { return }
+        guard !event.isARepeat, ignoresKey?(event) != true else { return }
         result.hits.append(KeyHit(t: t, kind: KeyHit.kind(keyCode: event.keyCode)))
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         guard let press = KeyPress.make(t: t, keyCode: event.keyCode,
@@ -184,7 +189,7 @@ final class CursorLogger {
         case 63: .function
         default: nil
         }
-        guard let flag, event.modifierFlags.contains(flag) else { return }
+        guard let flag, event.modifierFlags.contains(flag), ignoresKey?(event) != true else { return }
         result.hits.append(KeyHit(t: t, kind: .modifier))
     }
 

@@ -24,6 +24,7 @@ enum Theme {
     static let phone = Color(red: 0.95, green: 0.47, blue: 0.6)
     static let privacy = Color(red: 0.46, green: 0.52, blue: 0.64)
     static let spotlight = Color(red: 0.86, green: 0.76, blue: 0.38)
+    static let annotation = Color(red: 0.93, green: 0.45, blue: 0.38)
 
     static let hover = Animation.smooth(duration: 0.2)
     static let press = Animation.snappy(duration: 0.14)

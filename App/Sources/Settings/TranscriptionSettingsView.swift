@@ -10,11 +10,16 @@ import SwiftUI
 
 struct SettingsView: View {
     var body: some View {
-        TranscriptionSettingsView()
-            .frame(width: 520)
-            .fixedSize(horizontal: false, vertical: true)
-            .preferredColorScheme(.dark)
-            .tint(Theme.accent)
+        TabView {
+            GeneralSettingsView()
+                .tabItem { Label("General", systemImage: "gearshape") }
+            TranscriptionSettingsView()
+                .tabItem { Label("Transcription", systemImage: "captions.bubble") }
+        }
+        .frame(width: 520)
+        .fixedSize(horizontal: false, vertical: true)
+        .preferredColorScheme(.dark)
+        .tint(Theme.accent)
     }
 }
 

@@ -31,7 +31,10 @@ final class AppModel: ObservableObject {
     @Published private(set) var covered = false
     @Published private(set) var setupAppendTo: EditorModel?
     @Published private(set) var recordingPhase: RecordingController.Phase?
+    /// Whether the recording is being drawn on; nil when it can't be.
+    @Published private(set) var annotating: Bool?
     private var phaseWatch: AnyCancellable?
+    private var annotateWatch: AnyCancellable?
     var openWindow: OpenWindowAction? {
         didSet {
             openPendingFiles()
@@ -260,6 +263,8 @@ final class AppModel: ObservableObject {
             guard let self else { return }
             let source = CaptureBar.surface(for: recordingPhase)
             phaseWatch = nil
+            annotateWatch = nil
+            annotating = nil
             setupAppendTo = nil
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
                 if self?.recording == nil { self?.recordingPhase = nil }
@@ -292,6 +297,9 @@ final class AppModel: ObservableObject {
         }
         recording = controller
         phaseWatch = controller.$phase.sink { [weak self] in self?.recordingPhase = $0 }
+        annotating = nil
+        let canDraw = !controller.isDevice
+        annotateWatch = AnnotationController.shared.session.$isActive.sink { [weak self] in self?.annotating = canDraw ? $0 : nil }
         controller.start()
     }
 }

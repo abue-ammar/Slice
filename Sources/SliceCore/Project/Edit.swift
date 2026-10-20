@@ -190,6 +190,7 @@ extension Project {
         zoomBlocks = zoomBlocks.compactMap { blk in remap(blk.start, blk.end).map { var blk = blk; (blk.start, blk.end) = $0; return blk } }
         redactions = redactions.compactMap { blk in remap(blk.start, blk.end).map { var blk = blk; (blk.start, blk.end) = $0; return blk } }
         spotlights = spotlights.compactMap { blk in remap(blk.start, blk.end).map { var blk = blk; (blk.start, blk.end) = $0; return blk } }
+        annotations = annotations.compactMap { blk in remap(blk.start, blk.end).map { var blk = blk; (blk.start, blk.end) = $0; return blk } }
     }
 
     public mutating func removeSource(clipIndex: Int, from a: Double, to b: Double) {
@@ -223,6 +224,7 @@ extension Project {
         for i in zoomBlocks.indices { (zoomBlocks[i].start, zoomBlocks[i].end) = remap(zoomBlocks[i].start, zoomBlocks[i].end) }
         for i in redactions.indices { (redactions[i].start, redactions[i].end) = remap(redactions[i].start, redactions[i].end) }
         for i in spotlights.indices { (spotlights[i].start, spotlights[i].end) = remap(spotlights[i].start, spotlights[i].end) }
+        for i in annotations.indices { (annotations[i].start, annotations[i].end) = remap(annotations[i].start, annotations[i].end) }
     }
 
     mutating func normaliseCuts() {

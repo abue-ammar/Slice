@@ -34,6 +34,7 @@ public struct Project: Codable, Equatable {
     public var speeds: [SpeedRange]
     public var redactions: [RedactBlock]
     public var spotlights: [SpotlightBlock]
+    public var annotations: [AnnotationBlock]
 
     public init(name: String, createdAt: Date = Date()) {
         self.name = name
@@ -60,6 +61,7 @@ public struct Project: Codable, Equatable {
         speeds = []
         redactions = []
         spotlights = []
+        annotations = []
     }
 
     /// Missing keys fall back to defaults, so older projects still open.
@@ -91,6 +93,7 @@ public struct Project: Codable, Equatable {
         speeds = try c.decodeIfPresent([SpeedRange].self, forKey: .speeds) ?? []
         redactions = try c.decodeIfPresent([RedactBlock].self, forKey: .redactions) ?? []
         spotlights = try c.decodeIfPresent([SpotlightBlock].self, forKey: .spotlights) ?? []
+        annotations = try c.decodeIfPresent([AnnotationBlock].self, forKey: .annotations) ?? []
     }
 
     public var hasCamera: Bool { clips.contains { $0.cameraFile != nil } }
@@ -115,6 +118,8 @@ public struct Clip: Codable, Equatable, Identifiable {
     public var cursorInVideo: Bool
     public var frameRate: Int?
     public var device: RecordedDevice?
+    /// Its log's annotations have been put on the timeline, so deleting them all doesn't bring them back.
+    public var annotationsImported: Bool?
 
     public init(id: UUID = UUID(), screenFile: String, cameraFile: String? = nil, micFile: String? = nil,
                 cursorFile: String? = nil, duration: Double, screenPixelSize: CGSize, captureRect: CGRect,
@@ -148,6 +153,7 @@ public struct Clip: Codable, Equatable, Identifiable {
         cursorInVideo = try c.decodeIfPresent(Bool.self, forKey: .cursorInVideo) ?? true
         frameRate = try c.decodeIfPresent(Int.self, forKey: .frameRate)
         device = try c.decodeIfPresent(RecordedDevice.self, forKey: .device)
+        annotationsImported = try c.decodeIfPresent(Bool.self, forKey: .annotationsImported)
     }
 
     public var hasEditableCursor: Bool { cursorFile != nil && !cursorInVideo && captureRect.width > 0 && captureRect.height > 0 }
