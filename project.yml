@@ -52,8 +52,8 @@ targets:
       properties:
         CFBundleDisplayName: Slice
         CFBundleName: Slice
-        CFBundleShortVersionString: "0.2.3"
-        CFBundleVersion: "5"
+        CFBundleShortVersionString: "0.2.4"
+        CFBundleVersion: "6"
         LSApplicationCategoryType: public.app-category.video
         NSCameraUsageDescription: Slice records your camera alongside your screen.
         NSMicrophoneUsageDescription: Slice records your voice alongside your screen.
