@@ -25,7 +25,7 @@ struct KeyframeLane: View {
                 .fill(Color.white.opacity(0.025))
                 .overlay {
                     if keys.isEmpty {
-                        Text("Click to add a keyframe. The phone moves from one to the next")
+                        Text("Click to add a keyframe. The device moves from one to the next")
                             .font(.system(size: 11))
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)

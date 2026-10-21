@@ -37,6 +37,7 @@
 - **Liquid Glass lens**: a glass magnifier that glides across the screen and morphs into the next one.
 - **Cursor**: resize, smooth, restyle or hide it after recording, and add click effects.
 - **iPhone**: record a connected iPhone in its device frame, or edit the take on a 3D iPhone.
+- **3D MacBook**: show a screen recording on a 3D MacBook, with its bezel, notch and keyboard and a lid that opens and closes, posed, keyframed and exported like the 3D iPhone.
 - **Transcript**: on-device transcription. Delete words to cut the video, and add subtitles.
 - **Voice enhancement**: offline noise removal and podcast-style polish.
 - **Export**: 16:9, 9:16 and 1:1 from one edit, up to 4K and 120 fps.
@@ -82,7 +83,7 @@ You can use it for free, including at work, and read, build and modify the code.
 
 ## Credits
 
-[FluidAudio](https://github.com/FluidInference/FluidAudio), [Parakeet](https://huggingface.co/FluidInference/parakeet-ultra-coreml), [DeepFilterNet](https://github.com/Rikorose/DeepFilterNet), [SmoothGradient](https://github.com/raymondjavaxx/SmoothGradient), [border-beam](https://beam.jakubantalik.com), and the [3D iPhone models](Sources/SliceCore/Resources/Models/CREDITS.txt) by their Sketchfab artists.
+[FluidAudio](https://github.com/FluidInference/FluidAudio), [Parakeet](https://huggingface.co/FluidInference/parakeet-ultra-coreml), [DeepFilterNet](https://github.com/Rikorose/DeepFilterNet), [SmoothGradient](https://github.com/raymondjavaxx/SmoothGradient), [border-beam](https://beam.jakubantalik.com), and the [3D iPhone and MacBook models](Sources/SliceCore/Resources/Models/CREDITS.txt) by their Sketchfab artists.
 <br>
 
 <p align="center"><sub>Made by <a href="https://x.com/rit3zh">@rit3zh</a></sub></p>

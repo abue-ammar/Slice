@@ -1,5 +1,12 @@
 All models are licensed under CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/).
 
+MacBook Neo.usdz
+"Apple Macbook Neo 2026" by NeoTech (https://sketchfab.com/markusha3333)
+
+MacBook Air 15.usdz
+"Apple Macbook Air 15 (Space Gray) 2023" by akshatmittal (https://sketchfab.com/akshatmittal), as credited in the file
+https://sketchfab.com/3d-models/apple-macbook-air-15-space-gray-2023-e8d82e341c794141a2561c2c9d01d79e
+
 iPhone 17 Pro Max.usdz
 "iPhone 17 Pro Max" by MajdyModels (https://sketchfab.com/MG990)
 https://sketchfab.com/3d-models/iphone-17-pro-max-87fc1df741384124a8ce0226d2b2058d
@@ -28,5 +35,5 @@ preview-model.jpg
 The wallpaper shown on the phone's display in Slice's model and pose pickers.
 
 Changes, to every model: Slice turns it to face the camera, re-maps the display's texture coordinates, hides any stage
-modelled around the phone, recolours the body for other finishes and draws the recording on the display at run time;
+modelled around the device, recolours the body for other finishes and draws the recording on the display at run time;
 the files themselves are unmodified.

@@ -15,8 +15,8 @@ enum InspectorTab: String, CaseIterable {
     /// The rail's order: the 3D phone sits beside the flat frame.
     static let railOrder: [InspectorTab] = [.cursor, .keyboard, .frame, .device3D, .camera, .audio, .output, .transcript, .subtitles]
 
-    /// The 3D tab is only there for projects with a recording from a connected iPhone.
-    func isAvailable(in project: Project) -> Bool { self != .device3D || project.hasDeviceRecording }
+    /// The 3D tab is there once there's a take to show on a device (an iPhone take on a phone, a screen recording on a Mac).
+    func isAvailable(in project: Project) -> Bool { self != .device3D || !project.clips.isEmpty }
 
     var title: String {
         switch self {

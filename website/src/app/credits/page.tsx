@@ -7,7 +7,7 @@ import { reveal, step } from "@/lib/reveal";
 
 export const metadata: Metadata = pageMetadata({
 	title: "Credits",
-	description: "The artists behind the 3D iPhone models in Slice's editor, shared under CC BY 4.0.",
+	description: "The artists behind the 3D iPhone and MacBook models in Slice's editor, shared under CC BY 4.0.",
 	path: "/credits",
 	image: "/media/iphone-3d.jpg",
 });
@@ -29,10 +29,10 @@ export default function CreditsPage() {
 						Credits
 					</p>
 					<h1 className={`blur-in ${doc.title}`} style={step(1)}>
-						3D iPhone models
+						3D device models
 					</h1>
 					<p className={`blur-in ${doc.lede}`} style={step(2)}>
-						The iPhones you can drop a recording onto in Slice were made by these artists and shared on Sketchfab
+						The iPhones and MacBook you can drop a recording onto in Slice were made by these artists and shared on Sketchfab
 						under{" "}
 						<a href={MODEL_LICENSE.url} target="_blank" rel="noreferrer" className={doc.link}>
 							{MODEL_LICENSE.name}
@@ -70,7 +70,7 @@ export default function CreditsPage() {
 					<h2 className="mb-2 text-[15px] font-medium text-fg">Changes</h2>
 					<p className="text-[14px] leading-[1.7] text-pretty text-muted">
 						Slice turns each model to face the camera, re-maps its display’s texture coordinates, hides any stage
-						modelled around the phone, recolours the body for other finishes and draws your recording on the display as
+						modelled around the device, recolours the body for other finishes and draws your recording on the display as
 						it plays. The model files themselves ship unmodified.
 					</p>
 				</section>

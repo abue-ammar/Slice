@@ -60,7 +60,7 @@ scripts/release.sh
   - `Audio`: music, levels, loudness, voice enhancement
   - `Captions`: transcription and subtitles
   - `Devices`: iPhone frames, layout, compositing and usbmuxd
-  - `Resources`: Metal shaders (compiled at runtime), cursor artwork and sounds, and the 3D iPhone models (USDZ)
+  - `Resources`: Metal shaders (compiled at runtime), cursor artwork and sounds, and the 3D iPhone and MacBook models (USDZ)
 - `App/Sources`: the SwiftUI app.
   - `App`: app entry, recording session, window morphs
   - `Capture`: the capture bar, recorder, area and window pickers

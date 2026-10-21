@@ -13,6 +13,20 @@ export const MODEL_LICENSE = {
 
 export const MODELS: ModelCredit[] = [
 	{
+		model: "MacBook Neo",
+		title: "Apple Macbook Neo 2026",
+		author: "NeoTech",
+		authorURL: "https://sketchfab.com/markusha3333",
+		url: "https://sketchfab.com/markusha3333",
+	},
+	{
+		model: "MacBook Air 15",
+		title: "Apple Macbook Air 15 (Space Gray) 2023",
+		author: "akshatmittal",
+		authorURL: "https://sketchfab.com/akshatmittal",
+		url: "https://sketchfab.com/3d-models/apple-macbook-air-15-space-gray-2023-e8d82e341c794141a2561c2c9d01d79e",
+	},
+	{
 		model: "iPhone 17 Pro Max",
 		title: "iPhone 17 Pro Max",
 		author: "MajdyModels",

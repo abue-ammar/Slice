@@ -199,7 +199,7 @@ final class Device3DTests: XCTestCase {
         let out = CGSize(width: 540, height: 960)
         let screenAspect: [Device3DModel: Double] = [.iPhone17ProMax: 1320.0 / 2868, .iPhoneAir: 1260.0 / 2736, .iPhone16ProMax: 1320.0 / 2868,
                                                      .iPhone16Plus: 1290.0 / 2796, .iPhone15ProMax: 1290.0 / 2796, .iPhone14ProMax: 1290.0 / 2796]
-        for model in Device3DModel.allCases {
+        for model in Device3DModel.models(.phone) {
             XCTAssertEqual(Device3DRenderer.shared.status(for: model), .ready(hasDisplayMesh: true), model.label)
             let aspect = try XCTUnwrap(Device3DRenderer.shared.displayAspect(for: model))
             XCTAssertEqual(aspect, screenAspect[model]!, accuracy: 0.03, "\(model.label) display has the screen's shape")

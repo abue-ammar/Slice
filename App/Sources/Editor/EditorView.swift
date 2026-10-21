@@ -224,11 +224,11 @@ struct EditorView: View {
             list.append(EditorCommand(id: "tab-\(tab.rawValue)", title: "Show \(tab.title)", symbol: tab.symbol, group: .panels,
                                       keys: ["⌘", "\(i + 1)"], keywords: "inspector settings tab") { show(tab) })
         }
-        if editor.project.hasDeviceRecording {
+        if !editor.project.clips.isEmpty {
             let on = editor.project.device3D.enabled
-            list.append(EditorCommand(id: "device3d", title: on ? "Show the iPhone flat" : "Show the iPhone in 3D", symbol: "cube",
-                                      group: .view, keywords: "3d mockup phone device tilt") {
-                withAnimation(.snappy) { editor.project.device3D.enabled.toggle() }
+            list.append(EditorCommand(id: "device3d", title: on ? "Show the recording flat" : "Show the recording on a 3D device",
+                                      symbol: "cube", group: .view, keywords: "3d mockup phone iphone mac macbook laptop device tilt") {
+                withAnimation(.snappy) { editor.enable3D(!on) }
                 if !on { show(.device3D) }
             })
         }

@@ -8,8 +8,8 @@
 import SliceCore
 import SwiftUI
 
-/// The 3D tab: shows an iPhone recording on a 3D phone. Only device takes are drawn in 3D; the recording itself never
-/// changes, so it can be switched off again at any time.
+/// The 3D tab: shows a recording on a 3D device, an iPhone take on a phone and a screen recording on a Mac. The
+/// recording itself never changes, so it can be switched off again at any time.
 struct Device3DSection: View {
     @ObservedObject var editor: EditorModel
 
@@ -17,22 +17,28 @@ struct Device3DSection: View {
 
     var body: some View {
         Group {
-            PanelSection("3D iPhone", trailing: AnyView(enableToggle)) {
+            PanelSection("3D device", trailing: AnyView(enableToggle)) {
                 if let warning { warning }
                 if s.enabled {
                     ModelPicker(editor: editor)
                 } else {
-                    Device3DThumbnail(model: s.model, finish: s.finish, placement: Device3DPlacement(yaw: 22, pitch: 6),
-                                      size: CGSize(width: 140, height: 170))
+                    let preview = offPreview
+                    Device3DThumbnail(model: preview, finish: preview == s.model ? s.finish : preview.finishes[0],
+                                      placement: preview.kind == .laptop ? Device3DPlacement(yaw: -20, pitch: -14)
+                                          : Device3DPlacement(yaw: 22, pitch: 6),
+                                      size: preview.kind == .laptop ? CGSize(width: 220, height: 150) : CGSize(width: 140, height: 170))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
-                    PanelNote("Show this iPhone recording on a 3D phone. The recording isn't changed, so you can turn it off at any time.")
+                    PanelNote(editor.available3DKinds == [.laptop]
+                        ? "Show this screen recording on a 3D MacBook. The recording isn't changed, so you can turn it off at any time."
+                        : "Show this recording on a 3D iPhone or Mac. The recording isn't changed, so you can turn it off at any time.")
                 }
             }
             if s.enabled {
                 PanelDivider()
                 PanelSection("Pose", trailing: AnyView(resetPose)) {
                     PosePresets(editor: editor)
+                    if s.model.kind == .laptop { LidControl(editor: editor) }
                     KeyframeBar(editor: editor)
                     MoreOptions("Adjust", id: "device3D.adjust") {
                         Device3DPoseSliders(editor: editor)
@@ -49,6 +55,7 @@ struct Device3DSection: View {
                         fresh.enabled = true
                         fresh.model = s.model
                         fresh.finish = s.model.finishes[0]
+                        fresh.placement = s.model.defaultPlacement
                         editor.removeAllKeyframes()
                         editor.project.device3D = fresh
                     }
@@ -69,8 +76,14 @@ struct Device3DSection: View {
         Binding(get: { editor.project.device3D[keyPath: keyPath] }, set: { editor.project.device3D[keyPath: keyPath] = $0 })
     }
 
+    /// The device the switched-off tab shows: one for the takes there are.
+    private var offPreview: Device3DModel {
+        if editor.project.hasTakes(for: s.model.kind) { return s.model }
+        return editor.available3DKinds.first.map { Device3DModel.models($0)[0] } ?? s.model
+    }
+
     private var enableToggle: some View {
-        Toggle("3D iPhone", isOn: bind(\.enabled).animation(.snappy))
+        Toggle("3D device", isOn: Binding(get: { s.enabled }, set: { on in withAnimation(.snappy) { editor.enable3D(on) } }))
             .labelsHidden()
             .toggleStyle(.switch)
             .controlSize(.small)
@@ -88,7 +101,7 @@ struct Device3DSection: View {
             .font(.system(size: 12))
             .fixedSize(horizontal: false, vertical: true))
         case .ready(hasDisplayMesh: false) where s.enabled:
-            AnyView(PanelNote("This model has no screen of its own, so the recording is laid on the front of the phone."))
+            AnyView(PanelNote("This model has no screen of its own, so the recording is laid on the front of the device."))
         default:
             nil
         }
@@ -115,10 +128,10 @@ struct Device3DSection: View {
 
     private var resetPose: some View {
         Button {
-            withAnimation(Theme.move) { editor.setPlacement(.standard) }
+            withAnimation(Theme.move) { editor.setPlacement(s.model.defaultPlacement) }
         } label: { Image(systemName: "arrow.counterclockwise") }
             .buttonStyle(IconButtonStyle(size: 24, iconSize: 11))
-            .help("Put the phone back in the middle, as it started")
+            .help("Put the device back in the middle, as it started")
     }
 
     // MARK: - Motion

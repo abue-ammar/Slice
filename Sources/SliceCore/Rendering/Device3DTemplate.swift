@@ -14,12 +14,29 @@ import simd
 final class Device3DTemplate {
     let root: SCNNode
     let bounds: (min: SIMD3<Float>, max: SIMD3<Float>)
+    /// The room the device can take up: its bounds, with all the places a laptop's lid swings through.
+    let extent: (min: SIMD3<Float>, max: SIMD3<Float>)
+    /// Where a laptop's lid turns, when it has one that can.
+    let lidHinge: SIMD3<Float>?
+    /// Radians the lid is modelled open: what the hinge turns from.
+    let lidOpening: Float
     let displaySize: CGSize
     let hasDisplayMesh: Bool
     /// Body colours (linear light: the diffuse and the glow) by material name, for recolouring to another finish.
     let bodyColors: [String: (diffuse: SIMD3<Float>?, emission: SIMD3<Float>?)]
     /// The brightness of the colour the body is modelled in, which a finish's tint is measured against.
     let bodyLuminance: Float
+    /// For a display mesh that also carries its bezel (a laptop's lid): where the screen lies on it (fractions, top-left
+    /// origin) and a mask of where it shows, around the notch and rounded corners.
+    let screenRegion: CGRect?
+    let screenMask: CGImage?
+
+    /// The shape (width over height) of what a recording fills: the screen within the display.
+    var screenAspect: CGFloat {
+        guard displaySize.height > 0 else { return 0 }
+        let r = screenRegion ?? CGRect(x: 0, y: 0, width: 1, height: 1)
+        return displaySize.width * r.width / max(displaySize.height * r.height, 1e-6)
+    }
 
     static let displayName = "Slice display"
     /// Glass is in its own category, which the studio lights leave out.
@@ -30,8 +47,11 @@ final class Device3DTemplate {
 
     var size: SIMD3<Float> { bounds.max - bounds.min }
 
+    /// How far the device reaches from its middle, whichever way it's turned.
+    var radius: Float { simd_length(simd_max(simd_abs(extent.min), simd_abs(extent.max))) }
+
     init(url: URL, name: String, displayNode: String? = nil, bodyColor: SIMD3<Float>? = nil,
-         bodyMaterials: Set<String>? = nil) throws {
+         bodyMaterials: Set<String>? = nil, laptop: Bool = false) throws {
         let source: SCNScene
         do {
             source = try SCNScene(url: url, options: [.checkConsistency: false])
@@ -50,8 +70,8 @@ final class Device3DTemplate {
             meshes.first { $0.name == n } ?? meshes.first { $0.geometry?.materials.contains { $0.name == n } == true }
         } ?? Self.findDisplay(meshes, in: model)
         // Some models come with a stage around the phone (a floor, a backdrop): anything reaching well beyond the
-        // display's footprint isn't part of the phone.
-        if let display {
+        // display's footprint isn't part of the phone. (A laptop's base reaches out in front of its screen.)
+        if let display, !laptop {
             let d = Self.box([display], in: model)
             let reach = (d.max - d.min).max() * 0.18
             let region = (min: d.min - SIMD3(repeating: reach), max: d.max + SIMD3(repeating: reach))
@@ -73,10 +93,18 @@ final class Device3DTemplate {
             // file: its longest spread is up, its thinnest is out of the screen.
             let axes = Self.principalAxes(points)
             let mean = points.reduce(SIMD3<Float>.zero, +) / Float(points.count)
-            facing = simd_dot(mean - centre, axes[2]) >= 0 ? axes[2] : -axes[2]
-            up = Self.longSide(of: points, across: axes[0], axes[1])
-            // The cameras are at the top; without them to go by, models stand the way their file has them.
-            if let lensCentre { if simd_dot(lensCentre - centre, up) < 0 { up = -up } } else if up.y < 0 { up = -up }
+            let long = Self.longSide(of: points, across: axes[0], axes[1])
+            if laptop {
+                // A laptop's screen faces over its keyboard, and stands across its short side, above the base.
+                facing = simd_dot(centre - mean, axes[2]) >= 0 ? axes[2] : -axes[2]
+                up = simd_normalize(simd_cross(facing, long))
+                if simd_dot(mean - centre, up) < 0 { up = -up }
+            } else {
+                facing = simd_dot(mean - centre, axes[2]) >= 0 ? axes[2] : -axes[2]
+                up = long
+                // The cameras are at the top; without them to go by, models stand the way their file has them.
+                if let lensCentre { if simd_dot(lensCentre - centre, up) < 0 { up = -up } } else if up.y < 0 { up = -up }
+            }
         } else {
             let reference = display.map { Self.box([$0], in: model) } ?? whole
             let wholeSize = whole.max - whole.min, referenceSize = reference.max - reference.min
@@ -99,9 +127,11 @@ final class Device3DTemplate {
         let move = simd_float4x4(columns: (SIMD4(1, 0, 0, 0), SIMD4(0, 1, 0, 0), SIMD4(0, 0, 1, 0), SIMD4(-middle, 1)))
         model.simdTransform = simd_float4x4(diagonal: SIMD4(1 / height, 1 / height, 1 / height, 1)) * move * rotation
 
-        let bounds = Self.bounds(of: meshes, in: root)
+        var bounds = Self.bounds(of: meshes, in: root)
         var displaySize = CGSize(width: 0.9 * CGFloat(bounds.max.x - bounds.min.x), height: 0.94 * CGFloat(bounds.max.y - bounds.min.y))
         var mapped = false
+        // Read before the display's texture coordinates are laid flat, as it goes by the model's own.
+        let screen = laptop ? display.flatMap { Self.screenRegion(of: $0, in: root) } : nil
         if let display, let size = Self.mapDisplay(display, in: root) {
             displaySize = size
             mapped = true
@@ -113,6 +143,19 @@ final class Device3DTemplate {
             node.name = Self.displayName
             root.addChildNode(node)
             if let display { display.isHidden = true }
+        }
+        // A laptop stands on its base, its lid as far open as it's modelled. Turned by its display alone, a lid modelled
+        // leaning back stood upright and tipped the base towards the camera. (Its screen is laid out above while upright.)
+        var lidOpening = Self.modelledLid
+        if laptop, let display, let tilt = Self.baseTilt(meshes, display: display, in: root), abs(tilt) > 0.02 {
+            model.simdTransform = simd_float4x4(simd_quatf(angle: tilt, axis: SIMD3(1, 0, 0))) * model.simdTransform
+            let level = Self.bounds(of: meshes, in: root)
+            let k = 1 / max(level.max.y - level.min.y, 1e-6), mid = (level.min + level.max) / 2
+            let centre = simd_float4x4(columns: (SIMD4(1, 0, 0, 0), SIMD4(0, 1, 0, 0), SIMD4(0, 0, 1, 0), SIMD4(-mid, 1)))
+            model.simdTransform = simd_float4x4(diagonal: SIMD4(k, k, k, 1)) * centre * model.simdTransform
+            bounds = Self.bounds(of: meshes, in: root)
+            displaySize = CGSize(width: displaySize.width * CGFloat(k), height: displaySize.height * CGFloat(k))
+            lidOpening -= tilt
         }
 
         let body = bodyColor ?? SIMD3(0.815, 0.195, 0.060)
@@ -176,10 +219,16 @@ final class Device3DTemplate {
             }
         }
 
+        let lid = laptop ? Self.rigLid(meshes, opening: lidOpening, in: root) : nil
         self.root = root
         self.bounds = bounds
+        extent = lid.map { (simd_min(bounds.min, $0.swept.min), simd_max(bounds.max, $0.swept.max)) } ?? bounds
+        lidHinge = lid?.hinge
+        self.lidOpening = lidOpening
         self.displaySize = displaySize
         hasDisplayMesh = mapped
+        screenRegion = screen?.rect
+        screenMask = screen?.mask
         self.bodyColors = bodyColors
         bodyLuminance = max((body * SIMD3(0.2126, 0.7152, 0.0722)).sum(), 0.01)
     }

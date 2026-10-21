@@ -34,8 +34,8 @@ export const COMPONENTS: Component[] = [
 		url: "https://beam.jakubantalik.com",
 	},
 	{
-		name: "3D iPhone models",
-		use: "The phones in the 3D editor, by the Sketchfab artists named in the credits",
+		name: "3D device models",
+		use: "The iPhones and MacBook in the 3D editor, by the Sketchfab artists named in the credits",
 		license: "CC BY 4.0",
 		url: "/credits",
 		file: "Sources/SliceCore/Resources/Models/CREDITS.txt",

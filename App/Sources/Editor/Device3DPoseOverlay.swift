@@ -23,7 +23,7 @@ struct Device3DPoseOverlay: NSViewRepresentable {
 
     func updateNSView(_ view: PoseCanvas, context: Context) { view.editor = editor }
 
-    static let hint = "Drag to move the phone, ⌥-drag to turn it, scroll to resize. Double-click resets."
+    static let hint = "Drag to move the device, ⌥-drag to turn it, scroll to resize. Double-click resets."
 }
 
 final class PoseCanvas: NSView {
@@ -61,7 +61,7 @@ final class PoseCanvas: NSView {
         }
         guard let current = placement else { return }
         if event.clickCount == 2 {
-            var reset = Device3DPlacement.standard
+            var reset = MainActor.assumeIsolated { editor?.project.device3D.model.defaultPlacement } ?? .standard
             reset.position = .zero
             placement = reset
             return

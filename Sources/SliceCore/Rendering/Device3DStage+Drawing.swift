@@ -32,7 +32,7 @@ extension Device3DStage {
         let k = out.width / request.view.width
         let shown = CGRect(x: request.view.minX + region.minX / k, y: request.view.minY + region.minY / k,
                            width: region.width / k, height: region.height / k)
-        camera.projectionTransform = SCNMatrix4(Self.crop(to: shown, of: out) * full)
+        camera.projectionTransform = SCNMatrix4(Self.crop(to: shown, of: out) * Self.metalDepth * full)
         SCNTransaction.commit()
         SCNTransaction.flush()
 
@@ -55,6 +55,13 @@ extension Device3DStage {
             .transformed(by: CGAffineTransform(translationX: region.minX, y: out.height - region.maxY))
     }
 
+    static let tintModifier = """
+    #pragma arguments
+    float3 sliceTint;
+    #pragma body
+    _surface.diffuse.rgb = sliceTint * dot(_surface.diffuse.rgb, float3(0.2126, 0.7152, 0.0722));
+    """
+
     /// Finish and lights.
     func dress(_ settings: Device3DSettings) {
         if finish != settings.finish {
@@ -70,6 +77,11 @@ extension Device3DStage {
             for (material, original) in bodyMaterials {
                 if let diffuse = original.diffuse {
                     material.diffuse.contents = color(native ? diffuse : tinted(diffuse))
+                } else if model.tintsTextures {
+                    // The picture carries detail (a keyboard, a logo): kept, its brightness taking the new colour.
+                    let tint = settings.finish.tint / template.bodyLuminance
+                    material.shaderModifiers = native ? nil : [.surface: Self.tintModifier]
+                    material.setValue(NSValue(scnVector3: SCNVector3(tint.x, tint.y, tint.z)), forKey: "sliceTint")
                 } else {
                     // A pictured body part keeps its picture in its own colour, and takes the new colour plain (a
                     // coloured picture can't be tinted to another colour, only towards it).
@@ -96,12 +108,17 @@ extension Device3DStage {
         let apparent = request.landscape ? SIMD2(size.y, size.x) : SIMD2(size.x, size.y)
         let fit = request.fit
         let ppu = max(min(Float(fit.width) / apparent.x, Float(fit.height) / apparent.y), 1)
-        let fov = Float(request.settings.fieldOfView)
-        let distance = Float(out.height) / (2 * tan(fov * .pi / 360) * ppu)
-        let reach = Float(pose.scale) * 0.75 + 0.5
+        let lensWidth = Float(request.settings.fieldOfView)
+        let natural = Float(out.height) / (2 * tan(lensWidth * .pi / 360) * ppu)
+        let reach = template.radius * Float(pose.scale)
+        // Made large under a wide lens, a device reaches the camera (a laptop's deep base and tall lid soonest) and is
+        // cut through where it passes it. The camera backs away instead and narrows its lens to keep the device the
+        // same size, as a dolly zoom does; going by the device's reach in every direction, it holds still as it turns.
+        let distance = max(natural, reach * 1.15 + 0.05)
+        let fov = distance > natural ? 2 * atan(Float(out.height) / (2 * distance * ppu)) * 180 / .pi : lensWidth
         for c in [camera, lens] {
             c.fieldOfView = CGFloat(fov)
-            c.zNear = Double(max(min(distance - reach, distance * 0.5), 0.005))
+            c.zNear = Double(max(min(distance - reach - 0.02, distance * 0.5), 0.005))
             c.zFar = Double(distance * 2 + reach)
         }
         cameraNode.simdPosition = SIMD3(0, 0, distance)
@@ -113,6 +130,7 @@ extension Device3DStage {
             * simd_quatf(angle: -Float(pose.pitch), axis: SIMD3(1, 0, 0))
             * simd_quatf(angle: roll, axis: SIMD3(0, 0, 1))
         phone.simdScale = SIMD3(repeating: Float(pose.scale))
+        lid?.simdOrientation = simd_quatf(angle: template.lidOpening - Float(pose.lid), axis: SIMD3(1, 0, 0))
         // `lens` never has its projection set, so it always reports SceneKit's own for the current field of view.
         return simd_float4x4(lens.projectionTransform(withViewportSize: out))
     }
@@ -123,7 +141,7 @@ extension Device3DStage {
         let view = simd_float4x4(columns: (SIMD4(1, 0, 0, 0), SIMD4(0, 1, 0, 0), SIMD4(0, 0, 1, 0),
                                            SIMD4(0, 0, -cameraNode.simdPosition.z, 1)))
         let m = projection * view * phone.simdTransform
-        let b = template.bounds
+        let b = template.extent
         var lo = CGPoint(x: CGFloat.infinity, y: .infinity), hi = CGPoint(x: -CGFloat.infinity, y: -.infinity)
         for i in 0 ..< 8 {
             let p = SIMD4<Float>(i & 1 == 0 ? b.min.x : b.max.x, i & 2 == 0 ? b.min.y : b.max.y, i & 4 == 0 ? b.min.z : b.max.z, 1)
@@ -148,6 +166,11 @@ extension Device3DStage {
         return CGRect(x: x, y: y, width: w, height: h)
     }
 
+    /// SceneKit hands out projections with OpenGL's depth (-1 at the near plane to 1 at the far one) but takes a set one
+    /// as Metal's (0 to 1), before turning it round for its reversed depth buffer. Set as given, the near plane landed
+    /// at about twice its distance and sliced through anything deep (a laptop's lid) as it turned.
+    static let metalDepth = simd_float4x4(rows: [SIMD4(1, 0, 0, 0), SIMD4(0, 1, 0, 0), SIMD4(0, 0, 0.5, 0.5), SIMD4(0, 0, 0, 1)])
+
     /// Narrows a projection of the whole `size` frame to `rect` of it (top-left origin), so that part fills the target.
     static func crop(to rect: CGRect, of size: CGSize) -> simd_float4x4 {
         let a0 = Float(2 * rect.minX / size.width - 1), a1 = Float(2 * rect.maxX / size.width - 1)
@@ -167,6 +190,7 @@ extension Device3DStage {
         }
         let limit: CGFloat = 4096
         var source = image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
+        if let region = template.screenRegion { source = inBezel(source, region: region) }
         let fit = min(limit / source.extent.width, limit / source.extent.height, 1)
         if fit < 1 { source = source.transformed(by: CGAffineTransform(scaleX: fit, y: fit), highQualityDownsample: true) }
         let w = Int(source.extent.width.rounded()), h = Int(source.extent.height.rounded())
@@ -185,6 +209,21 @@ extension Device3DStage {
         // Sampled through an sRGB view, so the constant-lit display lands on screen in exactly the recording's colours.
         if displayMaterial.diffuse.contents as AnyObject? !== view { displayMaterial.diffuse.contents = view }
         return (source, base)
+    }
+
+    /// The picture set into the display where its screen is, black around it (the bezel) and over the notch.
+    private func inBezel(_ picture: CIImage, region: CGRect) -> CIImage {
+        let canvas = CGRect(x: 0, y: 0, width: (picture.extent.width / region.width).rounded(),
+                            height: (picture.extent.height / region.height).rounded())
+        let black = CIImage(color: .black).cropped(to: canvas)
+        let placed = picture.transformed(by: CGAffineTransform(translationX: (region.minX * canvas.width).rounded(),
+                                                               y: ((1 - region.maxY) * canvas.height).rounded()))
+            .composited(over: black)
+        guard let mask = template.screenMask else { return placed.cropped(to: canvas) }
+        let m = CIImage(cgImage: mask)
+        let scaled = m.transformed(by: CGAffineTransform(scaleX: canvas.width / m.extent.width, y: canvas.height / m.extent.height))
+        return placed.applyingFilter("CIBlendWithMask", parameters: [kCIInputBackgroundImageKey: black, kCIInputMaskImageKey: scaled])
+            .cropped(to: canvas)
     }
 
     func encode(_ image: CIImage, into texture: MTLTexture, commands: MTLCommandBuffer) {

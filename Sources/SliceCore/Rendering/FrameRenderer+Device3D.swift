@@ -32,12 +32,13 @@ final class DisplaySurfaces: @unchecked Sendable {
 }
 
 extension RenderScene {
-    /// The 3D phone's settings and the take at `t`, when that take is a device recording shown in 3D.
+    /// The 3D device's settings and the take at `t`, when that take is shown on it (an iPhone take on a phone, a
+    /// screen recording on a laptop).
     public func device3D(at t: Double) -> (settings: Device3DSettings, clip: Clip)? {
         let settings = project.device3D
         guard settings.enabled else { return nil }
         let i = clipIndex(at: t)
-        guard project.clips.indices.contains(i), project.clips[i].device != nil else { return nil }
+        guard project.clips.indices.contains(i), settings.applies(to: project.clips[i]) else { return nil }
         return (settings, project.clips[i])
     }
 }
@@ -69,12 +70,12 @@ extension FrameRenderer {
         return phone.composited(over: close.composited(over: wide))
     }
 
-    /// What the 3D display shows: the take's picture with its pointer and clicks, lifted out of the frame's opening,
-    /// turned upright and shaped to the model's display (filled when they nearly match, else fitted on black, the way
-    /// a phone shows an app made for another screen).
+    /// What the 3D display shows: the take's picture with its pointer and clicks (an iPhone take lifted out of the
+    /// frame's opening and turned upright), shaped to the model's screen: filled when they nearly match, else fitted
+    /// on black, the way a phone shows an app made for another screen.
     private func displayImage(_ screen: CIImage, scene: RenderScene, time t: Double, clip: Clip, aspect: CGFloat) -> CIImage? {
-        guard let rect = clip.deviceDisplayRect, aspect > 0 else { return nil }
-        let canvas = clip.screenPixelSize
+        let canvas = clip.device == nil ? screen.extent.size : clip.screenPixelSize
+        guard let rect = clip.deviceDisplayRect ?? (canvas.width >= 1 ? CGRect(origin: .zero, size: canvas) : nil), aspect > 0 else { return nil }
         var picture = screen.transformed(by: CGAffineTransform(translationX: -screen.extent.minX, y: -screen.extent.minY))
         let cursor = scene.project.cursor
         if cursor.visible || cursor.clickEffect != .none {

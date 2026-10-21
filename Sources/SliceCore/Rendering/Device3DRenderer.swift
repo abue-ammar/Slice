@@ -69,8 +69,8 @@ public final class Device3DRenderer: @unchecked Sendable {
 
     /// The model's display shape (width over height), once it has loaded.
     func displayAspect(for model: Device3DModel) -> CGFloat? {
-        guard case let .success(t) = template(for: model), t.displaySize.height > 0 else { return nil }
-        return t.displaySize.width / t.displaySize.height
+        guard case let .success(t) = template(for: model), t.screenAspect > 0 else { return nil }
+        return t.screenAspect
     }
 
     /// Loads the model and draws a frame off screen, so the first real frame doesn't pay for shader compilation.
@@ -145,7 +145,8 @@ public final class Device3DRenderer: @unchecked Sendable {
         } else if let url = Bundle.module.url(forResource: model.resource, withExtension: "usdz", subdirectory: "Models") {
             do {
                 result = .success(try Device3DTemplate(url: url, name: model.label, displayNode: model.displayNode,
-                                                       bodyColor: model.bodyColor, bodyMaterials: model.bodyMaterials))
+                                                       bodyColor: model.bodyColor, bodyMaterials: model.bodyMaterials,
+                                                       laptop: model.kind == .laptop))
             } catch let error as Device3DError {
                 result = .failure(error)
             } catch {

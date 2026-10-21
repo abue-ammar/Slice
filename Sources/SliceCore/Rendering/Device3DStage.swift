@@ -22,6 +22,8 @@ final class Device3DStage {
     let renderer: SCNRenderer
     let scene = SCNScene()
     let phone: SCNNode
+    /// A laptop's lid, on its hinge.
+    let lid: SCNNode?
     let cameraNode = SCNNode()
     let camera = SCNCamera()
     let lens = SCNCamera()
@@ -57,6 +59,7 @@ final class Device3DStage {
         renderer = SCNRenderer(device: device, options: nil)
 
         phone = template.root.clone()
+        lid = phone.childNode(withName: Device3DTemplate.lidName, recursively: true)
         phone.enumerateHierarchy { node, _ in
             guard let geometry = node.geometry?.copy() as? SCNGeometry else { return }
             geometry.materials = geometry.materials.map { ($0.copy() as? SCNMaterial) ?? $0 }

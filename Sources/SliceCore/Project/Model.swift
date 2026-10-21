@@ -99,6 +99,12 @@ public struct Project: Codable, Equatable {
     public var hasCamera: Bool { clips.contains { $0.cameraFile != nil } }
 
     public var hasDeviceRecording: Bool { clips.contains { $0.device != nil } }
+
+    /// Whether the project has takes a 3D model of `kind` shows: iPhone takes for a phone, screen recordings for a laptop.
+    public func hasTakes(for kind: Device3DKind) -> Bool { clips.contains { kind == .phone ? $0.device != nil : $0.device == nil } }
+
+    /// Whether the chosen 3D model has takes here to show.
+    public var shows3D: Bool { device3D.enabled && hasTakes(for: device3D.model.kind) }
 }
 
 public struct Clip: Codable, Equatable, Identifiable {

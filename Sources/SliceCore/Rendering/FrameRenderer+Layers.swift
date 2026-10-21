@@ -60,10 +60,12 @@ extension FrameRenderer {
 
     func backdrop(scene: RenderScene, time t: Double, options: Options) -> CIImage {
         let style = scene.project.style
-        if let settings = scene.device3D(at: t)?.settings, settings.background != .frame {
+        let shown3D = scene.device3D(at: t)
+        if let settings = shown3D?.settings, settings.background != .frame {
             return device3DBackground(settings, size: scene.output)
         }
-        if style.padding < 0.0005, !scene.geometry(at: t).shapedByAlpha {
+        // A screen filling the frame edge to edge has black behind it; a 3D device always stands on the background.
+        if style.padding < 0.0005, !scene.geometry(at: t).shapedByAlpha, shown3D == nil {
             return CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: scene.output))
         }
         return background(style: style, image: options.backgroundImage, size: scene.output)

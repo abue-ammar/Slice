@@ -164,7 +164,7 @@ public struct RenderScene {
             },
             duration: duration, transition: style.zoomTransitionDuration)
 
-        if project.device3D.enabled, project.hasDeviceRecording {
+        if project.shows3D {
             let whole = CGRect(origin: .zero, size: output)
             phoneZoom = SegmentTimeline(
                 blocks: standardZooms.map { b in

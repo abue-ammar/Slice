@@ -141,7 +141,7 @@ extension EditorModel {
     }
 
     func appendRecordedClips(from recorded: Project) {
-        let warm = !project.hasDeviceRecording && recorded.hasDeviceRecording
+        let warm = !project.hasTakes(for: project.device3D.model.kind) && recorded.hasTakes(for: project.device3D.model.kind)
         project.clips = recorded.clips
         importAnnotations()
         if warm { warmUp3D() }

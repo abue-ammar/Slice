@@ -8,7 +8,7 @@
 import SliceCore
 import SwiftUI
 
-/// One-click poses, drawn with the chosen phone. They change the selected keyframe (or the one at the playhead)
+/// One-click poses, drawn with the chosen device. They change the selected keyframe (or the one at the playhead)
 /// when the phone is keyframed, and keep its place and size.
 struct PosePresets: View {
     @ObservedObject var editor: EditorModel
@@ -20,7 +20,20 @@ struct PosePresets: View {
         clock = editor.clock
     }
 
-    static let presets: [(name: String, placement: Device3DPlacement)] = [
+    static func presets(_ kind: Device3DKind) -> [(name: String, placement: Device3DPlacement)] {
+        kind == .laptop ? laptopPresets : phonePresets
+    }
+
+    static let laptopPresets: [(name: String, placement: Device3DPlacement)] = [
+        ("Front", Device3DPlacement(yaw: 0, pitch: -12)),
+        ("Turned", Device3DPlacement(yaw: -16, pitch: -14)),
+        ("Hero", Device3DPlacement(yaw: 28, pitch: -20)),
+        ("Side", Device3DPlacement(yaw: 70, pitch: -6)),
+        ("From above", Device3DPlacement(yaw: 0, pitch: -46)),
+        ("Low", Device3DPlacement(yaw: -14, pitch: 4)),
+    ]
+
+    static let phonePresets: [(name: String, placement: Device3DPlacement)] = [
         ("Front", Device3DPlacement(yaw: 0, pitch: 0)),
         ("Turned", Device3DPlacement(yaw: 24, pitch: 4)),
         ("Hero", Device3DPlacement(yaw: -24, pitch: 12, rotation: 6)),
@@ -33,7 +46,7 @@ struct PosePresets: View {
         let s = editor.project.device3D
         let current = editor.editedPlacement
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-            ForEach(Self.presets, id: \.name) { preset in
+            ForEach(Self.presets(s.model.kind), id: \.name) { preset in
                 let on = abs(current.yaw - preset.placement.yaw) < 0.5 && abs(current.pitch - preset.placement.pitch) < 0.5
                     && abs(current.rotation - preset.placement.rotation) < 0.5
                 PickerTile(selected: on, action: {
@@ -59,6 +72,39 @@ struct PosePresets: View {
     }
 }
 
+/// A laptop's lid: how far it stands open (keyed along with the rest of the pose), and opening or closing it in one
+/// click.
+struct LidControl: View {
+    @ObservedObject var editor: EditorModel
+    /// Keyframed, the lid moves along the timeline: follow the playhead.
+    @ObservedObject private var clock: PlaybackClock
+    /// Offers the one-click moves (a keyframe's own controls leave them out).
+    let animates: Bool
+
+    init(editor: EditorModel, animates: Bool = true) {
+        self.editor = editor
+        self.animates = animates
+        clock = editor.clock
+    }
+
+    var body: some View {
+        PanelSlider("Lid", value: Binding(get: { editor.editedPlacement.lid }, set: { v in editor.updatePlacement { $0.lid = v } }),
+                    in: Device3DSettings.lidRange, default: Device3DPlacement.openLid) { $0 < 0.5 ? "Closed" : "\(Int($0.rounded()))°" }
+            .help("How far the lid stands open, from closed to leaning back")
+        if animates {
+            HStack(spacing: 8) {
+                Text("Animate the lid").font(.system(size: 13))
+                Spacer()
+                Button("Open") { withAnimation(Theme.hover) { editor.animateLid(open: true) } }
+                    .help("Keys the lid opening from the playhead, over \(String(format: "%.1f", EditorModel.lidMove)) seconds")
+                Button("Close") { withAnimation(Theme.hover) { editor.animateLid(open: false) } }
+                    .help("Keys the lid closing from the playhead, over \(String(format: "%.1f", EditorModel.lidMove)) seconds")
+            }
+            .buttonStyle(PillButtonStyle())
+        }
+    }
+}
+
 /// Whether the phone is animated by keyframes, and the way to start or add to them.
 struct KeyframeBar: View {
     @ObservedObject var editor: EditorModel
@@ -80,7 +126,7 @@ struct KeyframeBar: View {
                 withAnimation(Theme.hover) { editor.addKeyframe(at: editor.time) }
             }
             .buttonStyle(PillButtonStyle())
-            .help("Add a keyframe at the playhead, with the phone's pose there")
+            .help("Add a keyframe at the playhead, with the device's pose there")
         }
         .padding(10)
         .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.white.opacity(0.03)))
@@ -90,9 +136,9 @@ struct KeyframeBar: View {
 
     private func summary(_ keys: [Device3DKeyframe]) -> String {
         switch keys.count {
-        case 0: "Holds this pose. Add keyframes to move the phone over time."
-        case 1: "1 keyframe. Add another and the phone moves between them."
-        default: "\(keys.count) keyframes on the 3D track. Posing the phone keys it at the playhead."
+        case 0: "Holds this pose. Add keyframes to move the device over time."
+        case 1: "1 keyframe. Add another and the device moves between them."
+        default: "\(keys.count) keyframes on the 3D track. Posing the device keys it at the playhead."
         }
     }
 }
@@ -113,11 +159,11 @@ struct Device3DPoseSliders: View {
         let d = Device3DPlacement.standard
         Group {
             PanelSlider("Turn", value: bind(\.yaw), in: -180 ... 180, default: d.yaw) { "\(Int($0.rounded()))°" }
-                .help("Turns the phone left or right, all the way round")
+                .help("Turns the device left or right, all the way round")
             PanelSlider("Tilt", value: bind(\.pitch), in: -180 ... 180, default: d.pitch) { "\(Int($0.rounded()))°" }
-                .help("Tips the phone's top away from you or towards you, all the way over")
+                .help("Tips the device's top away from you or towards you, all the way over")
             PanelSlider("Rotate", value: bind(\.rotation), in: -180 ... 180, default: 0) { "\(Int($0.rounded()))°" }
-                .help("Spins the phone in the picture, counter-clockwise")
+                .help("Spins the device in the picture, counter-clockwise")
             PanelSlider("Size", value: bind(\.scale), in: Device3DSettings.scaleRange, default: 1) { "\(Int(($0 * 100).rounded()))%" }
             PanelSlider("Left and right", value: Binding(get: { Double(p.position.x) }, set: { v in editor.updatePlacement { $0.position.x = v } }),
                         in: Device3DSettings.positionRange, default: 0) { offset($0) }
@@ -153,6 +199,7 @@ struct KeyframeInspector: View {
         InfoRow(title: "Time", value: CutPin.label(key.time, precise: true))
         PanelSection("Pose") {
             PosePresets(editor: editor)
+            if editor.project.device3D.model.kind == .laptop { LidControl(editor: editor, animates: false) }
             MoreOptions("Adjust", id: "device3D.keyframe.adjust", pinned: true) {
                 Device3DPoseSliders(editor: editor)
             }
@@ -163,8 +210,8 @@ struct KeyframeInspector: View {
                          curve: Binding(get: { key.curve }, set: { c in editor.updateKeyframe(key.id) { $0.curve = c } }),
                          duration: lead, id: "device3D.keyframeMotion")
             PanelNote(previous == nil
-                ? "This is the first keyframe: the phone holds its pose until here."
-                : "How the phone moves from the keyframe before to this one, over \(String(format: "%.1fs", lead)).")
+                ? "This is the first keyframe: the device holds its pose until here."
+                : "How the device moves from the keyframe before to this one, over \(String(format: "%.1fs", lead)).")
         }
         Button("Delete keyframe") { editor.deleteSelection() }
             .buttonStyle(DestructiveButtonStyle())

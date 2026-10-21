@@ -19,14 +19,31 @@ public struct Device3DPlacement: Codable, Equatable {
     /// Fractions of the frame from its centre; positive y is up.
     public var position: CGPoint
     public var scale: Double
+    /// Degrees a laptop's lid stands open from its keyboard: 0 is shut, 90 upright.
+    public var lid: Double
 
-    public init(yaw: Double = 12, pitch: Double = 3, rotation: Double = 0, position: CGPoint = .zero, scale: Double = 1) {
+    public init(yaw: Double = 12, pitch: Double = 3, rotation: Double = 0, position: CGPoint = .zero, scale: Double = 1,
+                lid: Double = Device3DPlacement.openLid) {
         self.yaw = yaw
         self.pitch = pitch
         self.rotation = rotation
         self.position = position
         self.scale = scale
+        self.lid = lid
     }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        yaw = try c.decode(Double.self, forKey: .yaw)
+        pitch = try c.decode(Double.self, forKey: .pitch)
+        rotation = try c.decode(Double.self, forKey: .rotation)
+        position = try c.decode(CGPoint.self, forKey: .position)
+        scale = try c.decode(Double.self, forKey: .scale)
+        lid = try c.decodeIfPresent(Double.self, forKey: .lid) ?? Self.openLid
+    }
+
+    /// A lid standing open, as laptops are modelled.
+    public static let openLid = 90.0
 
     public static let standard = Device3DPlacement()
 
@@ -39,7 +56,7 @@ public struct Device3DPlacement: Codable, Equatable {
         }
         return Device3DPlacement(yaw: angle(a.yaw, b.yaw), pitch: angle(a.pitch, b.pitch), rotation: angle(a.rotation, b.rotation),
                                  position: CGPoint(x: lerp(a.position.x, b.position.x, f), y: lerp(a.position.y, b.position.y, f)),
-                                 scale: exp(lerp(log(max(a.scale, 1e-3)), log(max(b.scale, 1e-3)), f)))
+                                 scale: exp(lerp(log(max(a.scale, 1e-3)), log(max(b.scale, 1e-3)), f)), lid: lerp(a.lid, b.lid, f))
     }
 
     func isClose(to other: Device3DPlacement) -> Bool {
@@ -164,6 +181,8 @@ public struct Device3DSettings: Codable, Equatable {
     /// Fractions of the frame from its centre; positive y is up. Beyond ±0.5 the phone runs off the frame.
     public var position = CGPoint.zero
     public var scale = 1.0
+    /// Degrees a laptop's lid stands open.
+    public var lid = Device3DPlacement.openLid
     /// 0 is a long lens (almost flat), 1 a wide one (strong perspective).
     public var perspective = 0.35
     public var animation = Device3DAnimation()
@@ -183,6 +202,8 @@ public struct Device3DSettings: Codable, Equatable {
 
     public static let scaleRange = 0.15 ... 4.0
     public static let positionRange = -1.0 ... 1.0
+    /// Shut to leaning well back, as far as a MacBook's hinge goes.
+    public static let lidRange = 0.0 ... 120.0
     static let fieldOfView = 8.0 ... 50.0
 
     public init(from decoder: Decoder) throws {
@@ -203,6 +224,7 @@ public struct Device3DSettings: Codable, Equatable {
         rotation = try c.decodeIfPresent(Double.self, forKey: .rotation) ?? d.rotation
         position = try c.decodeIfPresent(CGPoint.self, forKey: .position) ?? d.position
         scale = try c.decodeIfPresent(Double.self, forKey: .scale) ?? d.scale
+        lid = try c.decodeIfPresent(Double.self, forKey: .lid) ?? d.lid
         perspective = try c.decodeIfPresent(Double.self, forKey: .perspective) ?? d.perspective
         animation = try c.decodeIfPresent(Device3DAnimation.self, forKey: .animation) ?? d.animation
         background = (try? c.decodeIfPresent(Device3DBackground.self, forKey: .background)) ?? d.background
@@ -218,7 +240,7 @@ public struct Device3DSettings: Codable, Equatable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case enabled, model, finish, yaw, pitch, rotation, position, scale, perspective, animation, background,
+        case enabled, model, finish, yaw, pitch, rotation, position, scale, lid, perspective, animation, background,
              backgroundColor, brightness, lightAngle, reflections, shadowOpacity, shadowSoftness, shadowDistance, keyframes
         case tiltDirection, tiltStrength, lean
     }
@@ -233,6 +255,7 @@ public struct Device3DSettings: Codable, Equatable {
         try c.encode(rotation, forKey: .rotation)
         try c.encode(position, forKey: .position)
         try c.encode(scale, forKey: .scale)
+        try c.encode(lid, forKey: .lid)
         try c.encode(perspective, forKey: .perspective)
         try c.encode(animation, forKey: .animation)
         try c.encode(background, forKey: .background)
@@ -246,15 +269,19 @@ public struct Device3DSettings: Codable, Equatable {
         try c.encode(keyframes, forKey: .keyframes)
     }
 
+    /// Whether a take is drawn on this model: an iPhone take on a phone, a screen recording on a laptop.
+    public func applies(to clip: Clip) -> Bool { model.kind == .phone ? clip.device != nil : clip.device == nil }
+
     /// The pose controls' own values (used while there are no keyframes).
     public var placement: Device3DPlacement {
-        get { Device3DPlacement(yaw: yaw, pitch: pitch, rotation: rotation, position: position, scale: scale) }
+        get { Device3DPlacement(yaw: yaw, pitch: pitch, rotation: rotation, position: position, scale: scale, lid: lid) }
         set {
             yaw = newValue.yaw
             pitch = newValue.pitch
             rotation = newValue.rotation
             position = newValue.position
             scale = newValue.scale
+            lid = newValue.lid
         }
     }
 
@@ -306,6 +333,7 @@ public struct Device3DSettings: Codable, Equatable {
         rotation = d.rotation
         position = d.position
         scale = d.scale
+        lid = d.lid
     }
 
     var fieldOfView: Double {
@@ -338,7 +366,8 @@ public struct Device3DSettings: Codable, Equatable {
         pitch += abs(extra.yaw) * 0.2
         return Device3DPose(yaw: yaw, pitch: pitch, roll: base.rotation * radians,
                             offset: CGPoint(x: base.position.x + drift.x, y: base.position.y + drift.y),
-                            scale: min(max(base.scale, Self.scaleRange.lowerBound), Self.scaleRange.upperBound))
+                            scale: min(max(base.scale, Self.scaleRange.lowerBound), Self.scaleRange.upperBound),
+                            lid: min(max(base.lid, Self.lidRange.lowerBound), Self.lidRange.upperBound) * radians)
     }
 }
 
@@ -352,4 +381,6 @@ public struct Device3DPose: Equatable {
     /// Fractions of the frame; positive y is up.
     public var offset: CGPoint
     public var scale: Double
+    /// Radians a laptop's lid stands open.
+    public var lid: Double = .pi / 2
 }

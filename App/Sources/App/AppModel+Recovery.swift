@@ -7,7 +7,7 @@
 
 import AppKit
 import SliceCore
-
+    
 extension AppModel {
     /// At launch: puts back any take cut off when Slice last stopped mid-recording, then offers to open its project.
     func recoverInterruptedTakes() async {

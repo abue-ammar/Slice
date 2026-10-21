@@ -14,18 +14,29 @@ struct ModelPicker: View {
     private var s: Device3DSettings { editor.project.device3D }
 
     var body: some View {
+        let kinds = editor.available3DKinds
         VStack(alignment: .leading, spacing: 12) {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                ForEach(Device3DModel.allCases, id: \.self) { model in
+            ForEach(kinds, id: \.self) { kind in
+                if kinds.count > 1 {
+                    Text(kind.label).font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                }
+                models(Device3DModel.models(kind))
+            }
+            finishes
+        }
+    }
+
+    private func models(_ list: [Device3DModel]) -> some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                ForEach(list, id: \.self) { model in
                     let finish = model == s.model ? s.finish : model.finishes[0]
                     PickerTile(selected: model == s.model, action: {
-                        withAnimation(Theme.swap) {
-                            editor.project.device3D.model = model
-                            if !model.finishes.contains(s.finish) { editor.project.device3D.finish = model.finishes[0] }
-                        }
+                        withAnimation(Theme.swap) { editor.select3DModel(model) }
                     }) {
                         VStack(spacing: 6) {
-                            Device3DThumbnail(model: model, finish: finish, placement: Device3DPlacement(yaw: 24, pitch: 6),
+                            Device3DThumbnail(model: model, finish: finish,
+                                              placement: model.kind == .laptop ? Device3DPlacement(yaw: -20, pitch: -14)
+                                                  : Device3DPlacement(yaw: 24, pitch: 6),
                                               size: CGSize(width: 64, height: 76))
                             Text(model.shortLabel)
                                 .font(.system(size: 11, weight: .medium))
@@ -37,6 +48,9 @@ struct ModelPicker: View {
                     }
                 }
             }
+    }
+
+    private var finishes: some View {
             HStack(spacing: 8) {
                 ForEach(s.model.finishes, id: \.self) { finish in
                     FinishSwatch(finish: finish, selected: s.finish == finish) {
@@ -50,7 +64,6 @@ struct ModelPicker: View {
                     .contentTransition(.opacity)
             }
             .animation(.smooth(duration: 0.25), value: s.finish)
-        }
     }
 }
 
