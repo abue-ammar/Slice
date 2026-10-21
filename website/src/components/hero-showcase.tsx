@@ -7,6 +7,14 @@ type Clip = { id: string; label: string; src: string; poster: string; alt: strin
 
 const CLIPS: Clip[] = [
 	{
+		id: "macbook",
+		label: "3D MacBook",
+		src: "/media/macbook-3d.mp4",
+		poster: "/media/macbook-3d.jpg",
+		alt: "A screen recording of the Slice website playing on a 3D MacBook in front of a blue wallpaper, the Explore menu open as the cursor moves through it.",
+		rest: 0,
+	},
+	{
 		id: "annotations",
 		label: "Annotations",
 		src: "/media/annotations.mp4",
