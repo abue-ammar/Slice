@@ -30,7 +30,7 @@ enum BarStage: Equatable {
         switch self {
         case .setup: nil
         case .countdown: CGSize(width: 112, height: 72)
-        case let .live(canDraw): CGSize(width: canDraw ? LiveBar.liveWidth : 72, height: 72)
+        case let .live(canDraw): CGSize(width: canDraw ? LiveBar.liveWidth : LiveBar.plainWidth, height: 72)
         case .drawing: CGSize(width: LiveBar.drawingWidth, height: 72)
         case .saving: CGSize(width: 72, height: 72)
         }
@@ -60,26 +60,6 @@ struct MorphSurface: View {
                             tuning: BeamTuning(strokeOpacity: 1.6, innerOpacity: 1.2, bloomOpacity: 1.4, softness: 3))
                 .position(x: geo.size.width / 2, y: geo.size.height / 2)
         }
-    }
-}
-
-struct StopButton: View {
-    let action: () -> Void
-    @State private var hovering = false
-
-    var body: some View {
-        Button(action: action) {
-            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                .fill(Color(red: 0.95, green: 0.27, blue: 0.27))
-                .frame(width: 15, height: 15)
-                .frame(width: 44, height: 44)
-                .background(Circle().fill(Color.white.opacity(hovering ? 0.16 : 0.09)))
-                .contentShape(Circle())
-        }
-        .buttonStyle(PressScaleStyle(scale: 0.88))
-        .help("Stop recording")
-        .onHover { hovering = $0 }
-        .animation(Bar.hover, value: hovering)
     }
 }
 
@@ -115,8 +95,9 @@ struct BarShadow: View {
 
     var body: some View {
         shape.fill(.black)
-            .shadow(color: .black.opacity(0.35), radius: 20, y: 10)
-            .shadow(color: .black.opacity(0.18), radius: 2, y: 1)
+            // Kept inside `Bar.inset`: a wider shadow is cut off square at the bar window's edge.
+            .shadow(color: .black.opacity(0.22), radius: 10, y: 4)
+            .shadow(color: .black.opacity(0.12), radius: 1.5, y: 0.5)
             .mask {
                 Rectangle().padding(-60)
                     .overlay(shape.blendMode(.destinationOut))

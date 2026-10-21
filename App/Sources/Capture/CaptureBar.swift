@@ -195,10 +195,11 @@ struct CaptureBar: View {
                     .animation(.spring(response: 0.42, dampingFraction: 0.62), value: n)
                     .transition(.stageContent)
             case .live, .drawing:
-                LiveBar(drawing: stage == .drawing, session: model.annotating == nil ? nil : AnnotationController.shared.session) {
-                    model.recording?.stop()
+                if let recording = model.recording {
+                    LiveBar(recording: recording, drawing: stage == .drawing,
+                            session: model.annotating == nil ? nil : AnnotationController.shared.session)
+                        .transition(.stageContent)
                 }
-                    .transition(.stageContent)
             case .saving:
                 ProgressView()
                     .controlSize(.small)

@@ -41,6 +41,10 @@ final class RecordingController: ObservableObject {
     private var project: Project?
     private var recorder: Recorder?
     private var takeStartedAt: Date?
+    private var takeChange: Task<Void, Never>?
+    /// Takes recorded since Record was pressed: what Restart and Delete throw away.
+    private var sessionClips: [UUID] = []
+    private var discarding = false
     private var finishedSeconds = 0.0
     private var ticker: Timer?
     private var terminationDisabled = false
@@ -100,6 +104,7 @@ final class RecordingController: ObservableObject {
                     if let interruption { throw CaptureError.interrupted(interruption) }
                 }
                 try beginTake()
+                phase = .recording
             } catch {
                 AnnotationController.shared.recordingEnded()
                 await recorder?.shutdown()
@@ -110,17 +115,69 @@ final class RecordingController: ObservableObject {
         }
     }
 
+    /// Pausing closes the take and resuming opens the next one, which starts on the screen as it is then; the editor
+    /// plays the takes back to back. The bar flips at once while the take saves behind it.
     func togglePause() {
         switch phase {
         case .recording:
-            phase = .finishing
-            Task {
-                await endTake()
-                phase = .paused
-            }
+            phase = .paused
+            enqueue { await self.endTake() }
         case .paused:
-            try? beginTake()
+            phase = .recording
+            enqueue {
+                guard self.takeStartedAt == nil else { return }
+                do {
+                    try self.beginTake()
+                } catch {
+                    log.error("Couldn't resume recording: \(error.localizedDescription)")
+                    if self.phase == .recording { self.phase = .paused }
+                }
+            }
         default: break
+        }
+    }
+
+    /// Starts over: this recording's takes are thrown away and the countdown runs again.
+    func restart() {
+        guard phase == .recording || phase == .paused else { return }
+        phase = .countdown(3)
+        AnnotationController.shared.session.isActive = false
+        AnnotationController.shared.session.reset()
+        enqueue {
+            if self.takeStartedAt != nil { await self.discardTake() }
+            self.discardTakes()
+            self.finishedSeconds = 0
+            self.elapsed = 0
+            for n in stride(from: 3, through: 1, by: -1) {
+                self.phase = .countdown(n)
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                if self.interruption != nil { break }
+            }
+            do {
+                guard self.interruption == nil else { throw CaptureError.interrupted(self.interruption ?? "") }
+                try self.beginTake()
+                self.phase = .recording
+            } catch {
+                // Nothing is recording; stopping now ends the session like Stop would.
+                self.phase = .paused
+                self.stop()
+            }
+        }
+    }
+
+    /// Ends the recording and throws away what it recorded.
+    func delete() {
+        guard phase == .recording || phase == .paused else { return }
+        discarding = true
+        stop()
+    }
+
+    /// Pause, resume and stop run one after another, so a take never opens while the last is still saving.
+    private func enqueue(_ work: @escaping @MainActor () async -> Void) {
+        let previous = takeChange
+        takeChange = Task {
+            await previous?.value
+            await work()
         }
     }
 
@@ -132,16 +189,22 @@ final class RecordingController: ObservableObject {
 
     func stop() {
         guard phase == .recording || phase == .paused else { return }
-        let wasRecording = phase == .recording
         phase = .finishing
         AnnotationController.shared.recordingStopping()
+        let pending = takeChange
         Task {
-            if wasRecording { await endTake() }
+            await pending?.value
+            if discarding {
+                if takeStartedAt != nil { await discardTake() }
+                discardTakes()
+            } else if takeStartedAt != nil {
+                await endTake()
+            }
             deviceDropped = recorder?.deviceDropped ?? false
             await recorder?.shutdown()
             AnnotationController.shared.recordingEnded()
             finishSession()
-            guard let bundle, let project, !project.clips.isEmpty else {
+            guard let bundle, let project, !project.clips.isEmpty, !discarding else {
                 cleanUpEmptyNewProject()
                 onFinish(.success(editor))
                 return
@@ -182,7 +245,6 @@ final class RecordingController: ObservableObject {
     private func beginTake() throws {
         try recorder?.startTake()
         takeStartedAt = Date()
-        phase = .recording
         ticker?.invalidate()
         let t = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tick() }
@@ -198,11 +260,19 @@ final class RecordingController: ObservableObject {
         elapsed = finishedSeconds + Date().timeIntervalSince(takeStartedAt)
     }
 
+    /// The take recording now, ended and deleted rather than saved.
+    private func discardTake() async {
+        ticker?.invalidate()
+        takeStartedAt = nil
+        await recorder?.discardTake()
+    }
+
     private func endTake() async {
         ticker?.invalidate()
         takeStartedAt = nil
         guard let clip = await recorder?.endTake() else { return }
         project?.clips.append(clip)
+        sessionClips.append(clip.id)
         finishedSeconds += clip.duration
         elapsed = finishedSeconds
         guard let bundle, let project else { return }
@@ -213,6 +283,20 @@ final class RecordingController: ObservableObject {
             // The note stays, so the take is put back from it next launch.
             log.error("Couldn't save the take: \(error.localizedDescription)")
         }
+    }
+
+    /// Throws away this recording's takes, files and all; takes the project had before Record was pressed stay.
+    private func discardTakes() {
+        guard let bundle, var project, !sessionClips.isEmpty else { return }
+        let gone = Set(sessionClips)
+        let folders = project.clips.filter { gone.contains($0.id) }.map { bundle.file($0.screenFile).deletingLastPathComponent() }
+        project.clips.removeAll { gone.contains($0.id) }
+        self.project = project
+        try? bundle.save(project)
+        folders.forEach { try? FileManager.default.removeItem(at: $0) }
+        sessionClips = []
+        finishedSeconds = 0
+        elapsed = 0
     }
 
     private func cleanUpEmptyNewProject() {

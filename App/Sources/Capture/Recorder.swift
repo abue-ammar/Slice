@@ -187,6 +187,22 @@ final class Recorder: NSObject, @unchecked Sendable {
         return clip
     }
 
+    /// Ends the take without keeping it: nothing is finished or saved, and its folder goes.
+    func discardTake() async {
+        let writer: TakeWriter? = queue.sync {
+            let w = take
+            take = nil
+            return w
+        }
+        _ = cursor.stop()
+        deviceLostAt = nil
+        // A pointer save under way writes into the folder, so it's waited out before the folder goes.
+        await stopSavingCursor()
+        guard let writer else { return }
+        queue.sync { writer.discard() }
+        bundle.clearRecordingNote(writer.id)
+    }
+
     func shutdown() async {
         await MainActor.run {
             observers.forEach(NotificationCenter.default.removeObserver)

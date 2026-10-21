@@ -8,43 +8,51 @@
 import SliceCore
 import SwiftUI
 
-/// The bar while recording: draw and stop, opening out into the drawing tools between them while drawing is on.
+/// The bar while recording: finish with the time, then pause, restart and delete, then draw, opening out into the
+/// drawing tools after it while drawing is on.
 struct LiveBar: View {
+    @ObservedObject var recording: RecordingController
     let drawing: Bool
     let session: AnnotationSession?
-    let stop: () -> Void
 
-    static let pad: CGFloat = 14
+    static let pad: CGFloat = 12
+    static let finish: CGFloat = 104
+    static let icon: CGFloat = 40
     static let round: CGFloat = 44
-    static let gap: CGFloat = 6
     static let item: CGFloat = 32
     static let swatch: CGFloat = 22
     static let size: CGFloat = 24
     static let dividerPad: CGFloat = 8
+    static var divider: CGFloat { 1 + dividerPad * 2 }
     /// The bar opening into the tools and closing again: no overshoot, so the surface, the buttons riding its edges
     /// and the tools fading in all move as one.
     static let expand = Animation.spring(duration: 0.46, bounce: 0)
 
-    static var liveWidth: CGFloat { pad * 2 + round * 2 + gap }
+    static var plainWidth: CGFloat { pad * 2 + finish + divider + icon * 3 }
+    static var liveWidth: CGFloat { plainWidth + divider + icon }
     static var drawingWidth: CGFloat {
         let tools = CGFloat(Annotation.Tool.allCases.count) * item
         let colors = CGFloat(AnnotationSession.colors.count) * swatch
         let widths = CGFloat(AnnotationSession.widths.count) * size
-        return pad * 2 + round * 2 + 5 * (1 + dividerPad * 2) + tools + colors + widths + 2 * item
+        return liveWidth + 4 * divider + tools + colors + widths + 2 * item
     }
 
     var body: some View {
+        let paused = recording.phase == .paused
         HStack(spacing: 0) {
+            FinishButton(elapsed: recording.elapsed, paused: paused) { recording.stop() }
+            ToolDivider()
+            PauseButton(paused: paused) { recording.togglePause() }
+            LiveIcon(symbol: "arrow.counterclockwise", help: "Restart: delete this recording and start again") { recording.restart() }
+            LiveIcon(symbol: "trash", help: "Delete this recording") { recording.delete() }
             if let session {
-                DrawToggle(session: session)
+                ToolDivider()
+                LiveDrawButton(session: session)
                 if drawing {
-                    AnnotationTools(session: session)
+                    AnnotationTools(session: session, trailingDivider: false)
                         .transition(.toolsReveal)
-                } else {
-                    Color.clear.frame(width: Self.gap)
                 }
             }
-            StopButton(action: stop)
         }
         .padding(.horizontal, Self.pad)
         .frame(height: 72)

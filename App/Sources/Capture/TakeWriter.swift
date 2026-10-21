@@ -186,6 +186,15 @@ final class TakeWriter {
         return clip
     }
 
+    /// Stops every file without finishing it and removes the take's folder.
+    func discard() {
+        screen.cancelWriting()
+        camera?.cancelWriting()
+        mic?.cancel()
+        screenAudio?.cancel()
+        try? FileManager.default.removeItem(at: screen.outputURL.deletingLastPathComponent())
+    }
+
     func finish(at stop: CMTime, captureRect: CGRect, cursor: CursorLogger.Result) async -> Clip? {
         guard let start = startTime, stop > start else {
             screen.cancelWriting()
