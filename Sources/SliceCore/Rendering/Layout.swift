@@ -190,13 +190,20 @@ public struct ScreenGeometry: Equatable {
             ? CGSize(width: size.height * outAspect, height: size.height)
             : CGSize(width: size.width, height: size.width / outAspect)
         let mismatch = max(contentAspect / outAspect, outAspect / contentAspect)
-        followsCursor = mismatch > 1.4
-        // A framed device sits whole on the canvas at any aspect, as the 3D phone does: never cropped to fill.
-        if shapedByAlpha {
+        isMismatched = mismatch > Self.mismatchLimit
+        followsCursor = isMismatched
+        // A framed device sits whole on the canvas at any aspect, as the 3D phone does: never cropped to fill. A screen
+        // fitted whole does the same, so zooms are measured from all of it.
+        if shapedByAlpha || (isMismatched && style.fitsScreen) {
             fullBleedSize = output
             followsCursor = false
         }
     }
+
+    /// Past this, the recording is cropped to fill the frame unless it's fitted whole.
+    public static let mismatchLimit: CGFloat = 1.4
+    /// The recording's shape is far enough from the frame's that it's either cropped to fill or fitted whole.
+    public private(set) var isMismatched = false
 
     public var fullView: CGRect { CGRect(origin: .zero, size: output) }
 
@@ -205,10 +212,22 @@ public struct ScreenGeometry: Equatable {
         let w = fullBleedSize.width / s, h = fullBleedSize.height / s
         let cx = contentRect.minX + focus.x * contentRect.width
         let cy = contentRect.minY + focus.y * contentRect.height
-        let bounds = shapedByAlpha ? fullView : contentRect
-        let x = min(max(cx - w / 2, bounds.minX), bounds.maxX - w)
-        let y = min(max(cy - h / 2, bounds.minY), bounds.maxY - h)
-        return CGRect(x: x, y: y, width: w, height: h)
+        if shapedByAlpha {
+            return CGRect(x: min(max(cx - w / 2, 0), output.width - w), y: min(max(cy - h / 2, 0), output.height - h),
+                          width: w, height: h)
+        }
+        let c = contentRect
+        return CGRect(x: Self.place(cx - w / 2, length: w, content: c.minX ... c.maxX, frame: output.width),
+                      y: Self.place(cy - h / 2, length: h, content: c.minY ... c.maxY, frame: output.height),
+                      width: w, height: h)
+    }
+
+    /// Keeps a view inside the content along one axis; one longer than the content (a fitted screen zoomed in only a
+    /// little) keeps all of the content in view instead, without leaving the frame.
+    static func place(_ origin: CGFloat, length: CGFloat, content: ClosedRange<CGFloat>, frame: CGFloat) -> CGFloat {
+        let lo = content.lowerBound, hi = content.upperBound
+        if length <= hi - lo + 0.001 { return min(max(origin, lo), hi - length) }
+        return min(max(min(max(origin, hi - length), lo), 0), frame - length)
     }
 }
 

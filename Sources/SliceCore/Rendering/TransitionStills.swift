@@ -38,7 +38,7 @@ extension Project {
             for side in [w.held(at: w.start), w.held(at: w.end)] {
                 let clip = clips[side.segment.clipIndex]
                 out.insert(TransitionStill(clipID: clip.id, time: side.time, camera: false))
-                if clip.cameraFile != nil { out.insert(TransitionStill(clipID: clip.id, time: side.time, camera: true)) }
+                if clip.hasCamera(at: side.time) { out.insert(TransitionStill(clipID: clip.id, time: side.time, camera: true)) }
             }
         }
         return out

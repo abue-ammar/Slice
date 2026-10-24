@@ -111,6 +111,8 @@ public struct Clip: Codable, Equatable, Identifiable {
     public var id: UUID
     public var screenFile: String
     public var cameraFile: String?
+    /// Where a camera recorded later over the take stops, when it was stopped before the take ends.
+    public var cameraEnd: Double?
     public var micFile: String?
     public var screenAudioFile: String?
     public var cursorFile: String?
@@ -146,6 +148,7 @@ public struct Clip: Codable, Equatable, Identifiable {
         id = try c.decode(UUID.self, forKey: .id)
         screenFile = try c.decode(String.self, forKey: .screenFile)
         cameraFile = try c.decodeIfPresent(String.self, forKey: .cameraFile)
+        cameraEnd = try c.decodeIfPresent(Double.self, forKey: .cameraEnd)
         micFile = try c.decodeIfPresent(String.self, forKey: .micFile)
         screenAudioFile = try c.decodeIfPresent(String.self, forKey: .screenAudioFile)
         cursorFile = try c.decodeIfPresent(String.self, forKey: .cursorFile)
@@ -161,6 +164,10 @@ public struct Clip: Codable, Equatable, Identifiable {
         device = try c.decodeIfPresent(RecordedDevice.self, forKey: .device)
         annotationsImported = try c.decodeIfPresent(Bool.self, forKey: .annotationsImported)
     }
+
+    /// Whether the camera filmed this moment of the take. Past the end of a camera file AVFoundation keeps handing
+    /// back its last frame, so this decides.
+    public func hasCamera(at local: Double) -> Bool { cameraFile != nil && local < (cameraEnd ?? .infinity) }
 
     public var hasEditableCursor: Bool { cursorFile != nil && !cursorInVideo && captureRect.width > 0 && captureRect.height > 0 }
 }

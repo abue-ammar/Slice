@@ -60,7 +60,7 @@ public final class RenderState: @unchecked Sendable {
             guard project.clips.indices.contains(held.segment.clipIndex) else { return nil }
             let clip = project.clips[held.segment.clipIndex]
             guard let screen = stills[TransitionStill(clipID: clip.id, time: held.time, camera: false)] else { return nil }
-            let camera = clip.cameraFile == nil ? nil : stills[TransitionStill(clipID: clip.id, time: held.time, camera: true)]
+            let camera = !clip.hasCamera(at: held.time) ? nil : stills[TransitionStill(clipID: clip.id, time: held.time, camera: true)]
             return TransitionSources(screen: screen, camera: camera, incoming: held.incoming)
         }
     }

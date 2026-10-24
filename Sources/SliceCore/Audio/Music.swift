@@ -179,7 +179,7 @@ extension Project {
         var out: [TimeSpan] = []
         for seg in segments {
             let clip = clips[seg.clipIndex]
-            guard let spans = clip.speech, speechAudible(clip), !seg.isSpedUp else { continue }
+            guard let spans = clip.speech, speechAudible(clip), !seg.isRetimed else { continue }
             for s in spans where s.end > seg.sourceStart && s.start < seg.sourceEnd {
                 out.append(TimeSpan(start: seg.edited(local: max(s.start, seg.sourceStart)),
                                     end: seg.edited(local: min(s.end, seg.sourceEnd))))

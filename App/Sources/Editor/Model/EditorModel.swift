@@ -130,6 +130,8 @@ final class EditorModel: ObservableObject {
     @Published var showVoiceModelSheet = false
     /// Whether the 3D phone's model loaded, once it's been tried.
     @Published var device3DStatus: Device3DStatus?
+    /// The camera being recorded over a take, while its sheet is open.
+    @Published var overdub: CameraOverdub?
     var voiceTask: Task<Void, Error>?
     var denoiseJobs: [UUID: Task<Void, Error>] = [:]
     var voicePlan: [UUID: Double] = [:]

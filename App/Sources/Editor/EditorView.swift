@@ -100,6 +100,7 @@ struct EditorView: View {
             return true
         }
         .sheet(isPresented: $showExport) { ExportSheet(editor: editor) }
+        .sheet(item: $editor.overdub) { overdub in CameraOverdubSheet(overdub: overdub) }
         .background { shortcuts }
     }
 
@@ -237,6 +238,20 @@ struct EditorView: View {
                                       detail: aspect == .auto ? "Match recording" : aspect.rawValue, symbol: aspect.symbol,
                                       group: .view, keywords: "aspect ratio shape") {
                 withAnimation(.snappy) { editor.project.export.aspect = aspect }
+            })
+        }
+        let fits = editor.project.style.fitsScreen
+        list.append(EditorCommand(id: "fit", title: fits ? "Fill the frame with the recording" : "Fit the whole recording in the frame",
+                                  detail: fits ? "Crop and follow the pointer" : "No cropping", symbol: fits
+                                      ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left",
+                                  group: .view, keywords: "aspect vertical 9:16 crop letterbox zoom out shrink") {
+            withAnimation(.snappy) { editor.project.style.fitsScreen.toggle() }
+        })
+        if let clip = editor.overdubTarget {
+            list.append(EditorCommand(id: "overdub", title: "Record camera over this take",
+                                      detail: "Take \(clip.index + 1)", symbol: "video.badge.plus", group: .project,
+                                      keywords: "webcam face cam react commentary imported video voiceover") {
+                editor.recordCamera(over: clip.id)
             })
         }
         list += [

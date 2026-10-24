@@ -12,6 +12,16 @@ struct CameraSection: View {
     @ObservedObject var editor: EditorModel
 
     var body: some View {
+        if let target = editor.overdubTarget, editor.project.clips[target.index].cameraFile == nil {
+            PanelSection("Take \(target.index + 1) has no camera") {
+                PanelNote("Film yourself over it: the take plays while your camera records.")
+                Button { editor.recordCamera(over: target.id) } label: {
+                    Label("Record camera over this take", systemImage: "video.badge.plus")
+                }
+                .buttonStyle(PillButtonStyle(fullWidth: true))
+            }
+            PanelDivider()
+        }
         PanelSection("Default layout") {
             PanelNote("Used wherever no camera block is set on the timeline.")
             LayoutPicker(layout: $editor.project.defaultCamera)

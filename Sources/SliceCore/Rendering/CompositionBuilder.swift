@@ -124,11 +124,11 @@ public enum CompositionBuilder {
             let src = sources[seg.clipIndex]!
             let from = CMTime(seconds: seg.sourceStart, preferredTimescale: scale)
             let len = CMTime(seconds: seg.sourceDuration, preferredTimescale: scale)
-            let played = seg.isSpedUp ? CMTime(seconds: seg.duration, preferredTimescale: scale) : len
+            let played = seg.isRetimed ? CMTime(seconds: seg.duration, preferredTimescale: scale) : len
             try await insert(src.screen, from: from, duration: len, into: screenTrack, at: cursor)
             try await insert(src.camera, from: from, duration: len, into: cameraTrack, at: cursor)
-            if seg.isSpedUp {
-                // Sped-up stretches play without sound: at 2–8× speech is noise.
+            if seg.isRetimed {
+                // Retimed stretches play without sound: at 2–8× speech is noise, slowed it drags.
                 for track in [screenTrack, cameraTrack] {
                     track.scaleTimeRange(CMTimeRange(start: cursor, duration: len), toDuration: played)
                 }
@@ -139,7 +139,7 @@ public enum CompositionBuilder {
                 try await insert(src.screenAudio, from: from, duration: len, into: screenAudioTrack, at: cursor)
             }
             if let p = previous, p.clipIndex != seg.clipIndex || abs(p.sourceEnd - seg.sourceStart) > 0.001
-                || p.isSpedUp != seg.isSpedUp { joins.append(cursor) }
+                || p.isRetimed != seg.isRetimed { joins.append(cursor) }
             previous = seg
             cursor = cursor + played
         }
@@ -251,25 +251,31 @@ public enum CompositionBuilder {
                 sources.append(nil)
             }
         }
-        var tracks: [AVMutableCompositionTrack] = []
+        // Each track's end is kept here: `timeRange` walks every segment, which made hours of typing take minutes.
+        var tracks: [(track: AVMutableCompositionTrack, end: CMTime)] = []
         for shot in shots {
             guard sources.indices.contains(shot.sound), let source = sources[shot.sound] else { continue }
             let at = CMTime(seconds: shot.t, preferredTimescale: 48000)
             let len = CMTimeMinimum(source.range.duration, end - at)
             guard at >= .zero, len > .zero else { continue }
-            let track: AVMutableCompositionTrack
-            if let free = tracks.first(where: { $0.timeRange.end <= at }) {
-                track = free
+            let i: Int
+            if let free = tracks.firstIndex(where: { $0.end <= at }) {
+                i = free
             } else if tracks.count < maxTracks,
                       let t = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) {
-                tracks.append(t)
-                track = t
+                tracks.append((t, .zero))
+                i = tracks.count - 1
             } else { continue }
-            let trackEnd = track.timeRange.end
-            if at > trackEnd { track.insertEmptyTimeRange(CMTimeRange(start: trackEnd, end: at)) }
-            try? track.insertTimeRange(CMTimeRange(start: source.range.start, duration: len), of: source.track, at: at)
+            let track = tracks[i].track, trackEnd = tracks[i].end
+            if at > trackEnd {
+                track.insertEmptyTimeRange(CMTimeRange(start: trackEnd, end: at))
+                tracks[i].end = at
+            }
+            if (try? track.insertTimeRange(CMTimeRange(start: source.range.start, duration: len), of: source.track, at: at)) != nil {
+                tracks[i].end = at + len
+            }
         }
-        return tracks.map(\.trackID)
+        return tracks.map(\.track.trackID)
     }
 
     private static func insert(_ source: AVAssetTrack?, from: CMTime, duration: CMTime, into track: AVMutableCompositionTrack,

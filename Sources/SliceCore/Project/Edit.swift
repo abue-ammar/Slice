@@ -41,6 +41,9 @@ public struct Segment: Equatable {
     public var duration: Double { sourceDuration / speed }
     public var editedEnd: Double { editedStart + duration }
     public var isSpedUp: Bool { speed > 1 + 1e-6 }
+    public var isSlowed: Bool { speed < 1 - 1e-6 }
+    /// Any speed but 1× plays without sound.
+    public var isRetimed: Bool { abs(speed - 1) > 1e-6 }
 
     public func local(at t: Double) -> Double { sourceStart + min(max(t - editedStart, 0) * speed, sourceDuration) }
     public func edited(local: Double) -> Double { editedStart + (local - sourceStart) / speed }

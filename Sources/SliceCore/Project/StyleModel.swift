@@ -33,6 +33,9 @@ public struct FrameStyle: Codable, Equatable {
     public var cameraZoomScale = 0.8
     public var zoomTransitionDuration = 1.0
     public var screenBorder = 0.0
+    /// A recording whose shape is far from the frame's (a wide window in 9:16) is shown whole, with background around
+    /// it, instead of cropped to fill the frame and following the pointer. Zooms then start from the whole recording.
+    public var fitsScreen = false
 
     public init() {}
 
@@ -66,12 +69,13 @@ public struct FrameStyle: Codable, Equatable {
         cameraZoomScale = try c.decodeIfPresent(Double.self, forKey: .cameraZoomScale) ?? d.cameraZoomScale
         zoomTransitionDuration = try c.decodeIfPresent(Double.self, forKey: .zoomTransitionDuration) ?? d.zoomTransitionDuration
         screenBorder = try c.decodeIfPresent(Double.self, forKey: .screenBorder) ?? d.screenBorder
+        fitsScreen = try c.decodeIfPresent(Bool.self, forKey: .fitsScreen) ?? d.fitsScreen
     }
 
     private enum CodingKeys: String, CodingKey {
         case backgroundTop, backgroundBottom, backgroundImage, backgroundBlur, padding, screenCornerRadius, shadow, cameraCornerRadius,
              mirrorCamera, cameraBackgroundBlur, motionBlur, motionBlurAmount, transitionDuration, cameraZoomScale,
-             zoomTransitionDuration, screenBorder
+             zoomTransitionDuration, screenBorder, fitsScreen
         case legacyFullScreen = "fullScreen"
     }
 
@@ -93,6 +97,7 @@ public struct FrameStyle: Codable, Equatable {
         try c.encode(cameraZoomScale, forKey: .cameraZoomScale)
         try c.encode(zoomTransitionDuration, forKey: .zoomTransitionDuration)
         try c.encode(screenBorder, forKey: .screenBorder)
+        try c.encode(fitsScreen, forKey: .fitsScreen)
     }
 }
 

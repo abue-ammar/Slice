@@ -76,12 +76,12 @@ final class ProjectCompositor: NSObject, AVVideoCompositing, @unchecked Sendable
             // take itself decides whether there is a camera.
             let clips = project.clips
             let clipIndex = project.clipStarts.lastIndex { $0 <= t } ?? 0
-            let takeHasCamera = clipIndex < clips.count && clips[clipIndex].cameraFile != nil
+            let local = project.sourceTime(edited: t)?.local ?? t
+            let takeHasCamera = clipIndex < clips.count && clips[clipIndex].hasCamera(at: local)
             var camera = !takeHasCamera || instruction.cameraTrackID == kCMPersistentTrackID_Invalid ? nil
                 : request.sourceFrame(byTrackID: instruction.cameraTrackID).map { CIImage(cvPixelBuffer: $0) }
             if let current = camera {
                 let glitches = clipIndex < clips.count ? clips[clipIndex].cameraGlitches ?? [] : []
-                let local = project.sourceTime(edited: t)?.local ?? t
                 if glitches.contains(where: { $0.contains(local) }), let last = lastCamera, abs(t - last.time) < 0.3 {
                     camera = last.image
                 } else {

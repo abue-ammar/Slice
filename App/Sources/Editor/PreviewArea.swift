@@ -35,6 +35,7 @@ struct PreviewHeader: View {
             .buttonStyle(PillButtonStyle())
             .fixedSize()
             .help("Output shape. Auto matches the recording, so with no padding the screen fills the frame exactly.")
+            if canFit { fitMenu.transition(.opacity.combined(with: .scale(scale: 0.96))) }
             PreviewQualityMenu()
             if editor.smartZoomProgress != nil || editor.smartZoomNote != nil {
                 SmartZoomStatus(editor: editor)
@@ -52,6 +53,39 @@ struct PreviewHeader: View {
         .animation(Theme.swap, value: hint)
         .animation(Theme.swap, value: editor.smartZoomProgress == nil)
         .animation(Theme.swap, value: editor.smartZoomNote)
+        .animation(Theme.swap, value: canFit)
+    }
+
+    /// A recording far from the frame's shape, which is either cropped to fill it or fitted whole.
+    private var canFit: Bool {
+        let p = editor.project
+        return p.clips.contains { clip in
+            clip.device == nil
+                && ScreenGeometry(contentSize: clip.screenPixelSize, output: p.renderSize, style: p.style).isMismatched
+        }
+    }
+
+    private var fitMenu: some View {
+        let fits = editor.project.style.fitsScreen
+        return Menu {
+            Picker("Recording", selection: $editor.project.style.fitsScreen.animation(.snappy)) {
+                Label("Fill the frame, following the pointer", systemImage: "arrow.up.left.and.arrow.down.right").tag(false)
+                Label("Fit the whole recording", systemImage: "arrow.down.right.and.arrow.up.left").tag(true)
+            }
+            .pickerStyle(.inline)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: fits ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                Text(fits ? "Fit" : "Fill")
+                Image(systemName: "chevron.up.chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(.tertiary)
+            }
+        }
+        .menuStyle(.button)
+        .menuIndicator(.hidden)
+        .buttonStyle(PillButtonStyle())
+        .fixedSize()
+        .help("The recording's shape doesn't match the frame. Fill crops it and follows the pointer; Fit shows all of it, "
+            + "with the background around it, and zooms start from there.")
     }
 
     private var hint: String {

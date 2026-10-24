@@ -128,6 +128,9 @@ extension EditorModel {
         scanCameraGlitches()
         scanHoverMoments()
         scanSpeech()
+        if glitchScan != nil || hoverScan != nil || speechScan != nil {
+            update(id) { $0.note = "Looking through the recording…" }
+        }
         await glitchScan?.value
         await hoverScan?.value
         await speechScan?.value

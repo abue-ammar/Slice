@@ -44,16 +44,16 @@ struct SectionChip: View {
                                  startPoint: .top, endPoint: .bottom))
             .overlay { ticks(start: start, length: length).clipShape(shape) }
             .overlay {
-                if !segment.isSpedUp {
+                if !segment.isRetimed {
                     ClipWaveformView(audio: audio, sourceStart: segment.sourceStart + (leading ? delta : 0), pps: pps,
                                      strength: dimmed && !trimming ? 0.5 : 1)
                         .clipShape(shape)
                 }
             }
             .overlay(alignment: .bottomLeading) {
-                if segment.isSpedUp && width > 40 {
+                if segment.isRetimed && width > 40 {
                     HStack(spacing: 3) {
-                        Image(systemName: "hare.fill")
+                        Image(systemName: segment.isSlowed ? "tortoise.fill" : "hare.fill")
                         if width <= 70 { Text(SpeedRange.label(segment.speed)) }
                     }
                     .font(.rounded(9, .semibold))
@@ -76,7 +76,7 @@ struct SectionChip: View {
                 if width > 70 {
                     VStack(spacing: 0) {
                         Text(label).font(.system(size: 10, weight: .semibold)).foregroundStyle(.white.opacity(0.55))
-                        Text((segment.isSpedUp ? SpeedRange.label(segment.speed) + " · " : "") + CutPin.label(length, precise: trimming))
+                        Text((segment.isRetimed ? SpeedRange.label(segment.speed) + " · " : "") + CutPin.label(length, precise: trimming))
                             .font(.rounded(12).monospacedDigit())
                             .foregroundStyle(.white)
                             .contentTransition(.numericText(value: length))

@@ -157,6 +157,25 @@ final class SceneTests: XCTestCase {
         XCTAssertLessThan(abs(scene.view(at: 10.0).midX - scene.view(at: 10.034).midX), 60)
     }
 
+    func testPortraitFitsWholeRecording() {
+        var p = project()
+        p.style.fitsScreen = true
+        let portrait = OutputAspect.portrait9x16.size(shortSide: 1080)
+        let scene = RenderScene(project: p, output: portrait, cursor: CursorTrack(project: p, logs: [:]))
+        let g = scene.geometry(at: 0)
+        XCTAssertTrue(g.isMismatched)
+        XCTAssertFalse(g.followsCursor)
+        XCTAssertEqual(scene.view(at: 3), g.fullView)
+        // Zooms are measured from the whole frame and keep all of the screen in view until they're closer than it.
+        let near = g.zoomedView(scale: 1.5, focus: CGPoint(x: 0.1, y: 0.1))
+        XCTAssertEqual(near.width, portrait.width / 1.5, accuracy: 0.01)
+        XCTAssertLessThanOrEqual(near.minY, g.contentRect.minY)
+        XCTAssertGreaterThanOrEqual(near.maxY, g.contentRect.maxY)
+        let close = g.zoomedView(scale: 4, focus: CGPoint(x: 0.1, y: 0.1))
+        XCTAssertGreaterThanOrEqual(close.minX, g.contentRect.minX - 0.01)
+        XCTAssertGreaterThanOrEqual(close.minY, g.contentRect.minY - 0.01)
+    }
+
     func testUltrawideFitsInLandscape() {
         let g = ScreenGeometry(contentSize: CGSize(width: 3440, height: 1440), output: out, style: FrameStyle())
         XCTAssertFalse(g.followsCursor)

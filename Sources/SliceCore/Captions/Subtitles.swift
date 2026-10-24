@@ -80,7 +80,7 @@ public enum CaptionBuilder {
             guard let t = transcripts[clip.id] else { continue }
             for (wi, w) in t.words.enumerated() where w.hidden != true {
                 // Sped-up stretches play silent, so their words aren't captioned.
-                guard let seg = project.segment(clipIndex: i, local: (w.start + w.end) / 2), !seg.isSpedUp else { continue }
+                guard let seg = project.segment(clipIndex: i, local: (w.start + w.end) / 2), !seg.isRetimed else { continue }
                 let s = seg.edited(local: (w.start + w.end) / 2)
                 let half = (w.end - w.start) / 2
                 timed.append(.init(text: w.text, start: max(s - half, 0), end: s + half, clipIndex: i, wordIndex: wi))

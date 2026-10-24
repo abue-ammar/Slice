@@ -98,6 +98,9 @@ final class RecordingController: ObservableObject {
                         window.orderOut(nil)
                     }
                 }
+                if settings.showCamera, let session = recorder.captureSession, recorder.hasCameraOutput {
+                    CameraBubble.shared.show(session: session)
+                }
                 for n in stride(from: 3, through: 1, by: -1) {
                     phase = .countdown(n)
                     try await Task.sleep(nanoseconds: 1_000_000_000)
@@ -190,6 +193,7 @@ final class RecordingController: ObservableObject {
     func stop() {
         guard phase == .recording || phase == .paused else { return }
         phase = .finishing
+        CameraBubble.shared.hide()
         AnnotationController.shared.recordingStopping()
         let pending = takeChange
         Task {
@@ -305,6 +309,7 @@ final class RecordingController: ObservableObject {
     }
 
     private func finishSession() {
+        CameraBubble.shared.hide()
         if terminationDisabled {
             ProcessInfo.processInfo.enableAutomaticTermination("Recording")
             ProcessInfo.processInfo.enableSuddenTermination()

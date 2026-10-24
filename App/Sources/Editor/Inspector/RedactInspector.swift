@@ -43,9 +43,13 @@ struct SectionSpeedPicker: View {
             SegmentedControl(selection: Binding(get: { SpeedRange.choices.min { abs($0 - segment.speed) < abs($1 - segment.speed) } ?? 1 },
                                                 set: { editor.setSpeed($0, for: segment) }),
                              options: SpeedRange.choices, title: SpeedRange.label)
-            PanelNote(segment.isSpedUp
-                ? "Plays \(SpeedRange.label(segment.speed)) as fast, without sound. Good for waiting, loading and long typing."
-                : "Speed up slow parts like waiting or typing. Sped-up parts play without sound.")
+            PanelNote(note)
         }
+    }
+
+    private var note: String {
+        if segment.isSlowed { return "Plays at \(SpeedRange.label(segment.speed)) speed, without sound. Good for a quick move worth a closer look." }
+        if segment.isSpedUp { return "Plays \(SpeedRange.label(segment.speed)) as fast, without sound. Good for waiting, loading and long typing." }
+        return "Speed up waiting or typing, or slow down a quick move. Any speed but 1× plays without sound."
     }
 }

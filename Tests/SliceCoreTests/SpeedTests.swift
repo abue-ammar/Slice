@@ -30,6 +30,21 @@ final class SpeedTests: XCTestCase {
         XCTAssertEqual(local, 11, accuracy: 1e-9)
     }
 
+    func testSlowingDownASectionLengthensTheEdit() throws {
+        var p = oneClip()
+        p.split(at: 5)
+        p.split(at: 9)
+        p.setSpeed(0.25, for: p.segments[1])
+        XCTAssertEqual(p.duration, 5 + 16 + 11, accuracy: 1e-9)
+        XCTAssertEqual(p.editedTime(clipIndex: 0, local: 6)!, 9, accuracy: 1e-9)
+        XCTAssertEqual(try XCTUnwrap(p.sourceTime(edited: 13)).local, 7, accuracy: 1e-9)
+        XCTAssertTrue(p.segments[1].isSlowed && p.segments[1].isRetimed && !p.segments[1].isSpedUp)
+    }
+
+    func testSpeedLabels() {
+        XCTAssertEqual(SpeedRange.choices.map(SpeedRange.label), ["0.25×", "0.5×", "1×", "2×", "4×", "8×"])
+    }
+
     func testBlocksStayOnTheirMoments() {
         var p = oneClip()
         p.split(at: 5)
@@ -142,5 +157,25 @@ final class SpeedTests: XCTestCase {
         let built = try await CompositionBuilder.build(project: p, bundle: bundle, state: state, renderSize: size, fps: 30)
         let length = try await built.composition.load(.duration).seconds
         XCTAssertEqual(length, 1.75, accuracy: 0.01)
+    }
+
+    func testCompositionPlaysSlowedSectionsSlower() async throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("speed-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let (bundle, empty) = try ProjectBundle.create(name: "Speed", in: dir)
+        var p = empty
+        let id = UUID()
+        let (clipDir, rel) = try bundle.makeClipFolder(id: id)
+        let size = CGSize(width: 320, height: 200)
+        try await ExportTests.makeMovie(url: clipDir.appendingPathComponent("screen.mov"),
+                                        image: RenderTests.fakeScreen(size: size), duration: 4, fps: 30)
+        p.clips = [Clip(id: id, screenFile: "\(rel)/screen.mov", duration: 4, screenPixelSize: size, captureRect: .zero)]
+        p.split(at: 1)
+        p.split(at: 2)
+        p.setSpeed(0.5, for: p.segments[1])
+        let state = RenderState(project: p, cursor: CursorTrack(project: p, logs: [:]))
+        let built = try await CompositionBuilder.build(project: p, bundle: bundle, state: state, renderSize: size, fps: 30)
+        let length = try await built.composition.load(.duration).seconds
+        XCTAssertEqual(length, 1 + 2 + 2, accuracy: 0.01)
     }
 }

@@ -19,6 +19,8 @@ final class Recorder: NSObject, @unchecked Sendable {
         var fps = Settings.best
         var screenAudio = true
         var keys = true
+        /// The camera shows on screen while recording (`CameraBubble`).
+        var showCamera = true
 
         static let best = 0
     }

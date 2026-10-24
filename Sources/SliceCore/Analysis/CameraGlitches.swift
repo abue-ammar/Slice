@@ -30,12 +30,18 @@ public enum CameraGlitchDetector {
         out.alwaysCopiesSampleData = false
         reader.add(out)
         reader.startReading()
-        var frames: [(t: Double, thumb: [Float])] = []
+        // Only the last three frames are kept: every thumbnail of an hours-long take would be most of a gigabyte.
+        var window: [(t: Double, thumb: [Float])] = []
+        var spans: [TimeSpan] = []
         while let sb = out.copyNextSampleBuffer() {
             guard let pb = CMSampleBufferGetImageBuffer(sb) else { continue }
-            frames.append((CMSampleBufferGetPresentationTimeStamp(sb).seconds, thumbnail(pb)))
+            window.append((CMSampleBufferGetPresentationTimeStamp(sb).seconds, thumbnail(pb)))
+            if window.count > 3 { window.removeFirst() }
+            if window.count == 3, isGlitch(previous: window[0].thumb, frame: window[1].thumb, next: window[2].thumb) {
+                spans.append(TimeSpan(start: window[1].t, end: window[2].t))
+            }
         }
-        return glitches(in: frames)
+        return spans
     }
 
     public static func thumbnail(_ pb: CVPixelBuffer) -> [Float] {

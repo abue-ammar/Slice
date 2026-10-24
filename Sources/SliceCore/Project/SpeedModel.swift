@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// A stretch of a take that plays faster, in the take's own time (like a cut), so trimming and cutting around it
+/// A stretch of a take that plays faster or slower, in the take's own time (like a cut), so trimming and cutting around it
 /// leave it where it is.
 public struct SpeedRange: Codable, Equatable {
     public var clipID: UUID
@@ -25,11 +25,9 @@ public struct SpeedRange: Codable, Equatable {
         self.isAuto = isAuto
     }
 
-    public static let choices: [Double] = [1, 2, 4, 8]
+    public static let choices: [Double] = [0.25, 0.5, 1, 2, 4, 8]
 
-    public static func label(_ speed: Double) -> String {
-        speed.rounded() == speed ? "\(Int(speed))×" : String(format: "%.1f×", speed)
-    }
+    public static func label(_ speed: Double) -> String { String(format: "%g×", speed) }
 }
 
 extension Project {

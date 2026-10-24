@@ -27,6 +27,7 @@ struct CaptureBar: View {
     @AppStorage("setup.frameRate") var fps = Recorder.Settings.best
     @AppStorage("setup.screenAudio") var screenAudio = true
     @AppStorage("setup.keys") var keys = true
+    @AppStorage("setup.showCamera") var showCamera = true
     @State var keysAllowed = AXIsProcessTrusted()
     @State var displayID: CGDirectDisplayID?
     @AppStorage("setup.display") var savedDisplay = 0
@@ -250,7 +251,7 @@ struct CaptureBar: View {
         }
         let settings = Recorder.Settings(source: source, cameraID: cameraID.isEmpty ? nil : cameraID,
                                          micID: micID.isEmpty ? nil : micID, fps: fps, screenAudio: screenAudio,
-                                         keys: keys)
+                                         keys: keys, showCamera: showCamera)
         model.startRecording(settings: settings, appendTo: model.setupAppendTo)
     }
 }

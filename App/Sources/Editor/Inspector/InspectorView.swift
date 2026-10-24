@@ -138,6 +138,12 @@ struct SelectionInspector: View {
                     InfoRow(title: "Camera", value: clip.cameraFile == nil ? "None" : "Yes")
                     InfoRow(title: "Microphone", value: clip.micFile == nil ? "None" : "Yes")
                     InfoRow(title: "Screen audio", value: clip.screenAudioFile == nil ? "None" : "Yes")
+                    Button { editor.recordCamera(over: clip.id) } label: {
+                        Label(clip.cameraFile == nil ? "Record camera over this take" : "Record the camera again",
+                              systemImage: "video.badge.plus")
+                    }
+                    .buttonStyle(PillButtonStyle(fullWidth: true))
+                    .help("Plays the take while your camera films, for a face cam over an imported video or a take recorded without one")
                 }
                 if editor.canDeleteClip {
                     Button("Delete whole take…") { confirmDeleteTake = true }

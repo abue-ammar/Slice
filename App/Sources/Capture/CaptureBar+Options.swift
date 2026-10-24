@@ -90,6 +90,15 @@ extension CaptureBar {
                 .help("Best records at 120 fps on ProMotion displays when the encoder can keep up at that size, otherwise 60.")
             }
             VStack(alignment: .leading, spacing: 8) {
+                SectionTitle("Camera")
+                Toggle("Show camera while recording", isOn: $showCamera)
+                    .disabled(cameraName == nil)
+                    .help(cameraName == nil ? "Pick a camera first"
+                        : "A bubble you can drag anywhere and double-click to resize. It's left out of the recording.")
+            }
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            VStack(alignment: .leading, spacing: 8) {
                 SectionTitle("Audio & keys")
                 Toggle(kind != .device ? "Record sound from apps" : "Record the iPhone's sound", isOn: $screenAudio)
                 if kind != .device {

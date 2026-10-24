@@ -95,7 +95,8 @@ final class PreviewDriver: @unchecked Sendable {
                 let at = shown.isValid ? shown.seconds : item.seconds
                 let project = renderState.current().project
                 let clip = project.clipStarts.lastIndex { $0 <= at + 1e-6 } ?? 0
-                let hasCamera = project.clips.indices.contains(clip) && project.clips[clip].cameraFile != nil
+                let local = project.sourceTime(edited: at)?.local ?? at
+                let hasCamera = project.clips.indices.contains(clip) && project.clips[clip].hasCamera(at: local)
                     && packing.hasCamera(in: buffer)
                 let sources = packing.unpack(CIImage(cvPixelBuffer: buffer), clip: clip, hasCamera: hasCamera)
                 frame = PreviewSourceFrame(time: at, screen: sources.screen, camera: sources.camera)
