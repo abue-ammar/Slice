@@ -1,0 +1,45 @@
+---
+title: Record your camera over any video
+description: Slice 0.2.5 lets you film yourself over a take you already have, shows your camera while you record, adds slow motion, and can fit a wide recording whole in a tall video.
+date: 2026-10-24T12:00:00Z
+---
+
+Slice 0.2.5 is out. It's about your camera: putting it on videos that never had one, and seeing it while you record. There's also slow motion, and a better way to fit a wide screen into a tall video.
+
+## Record your camera over a take
+
+Imported a video, or recorded a take with the camera off? Select it and click **Record camera over this take**. The take plays while your camera films, and your mic too if you've picked one. Stop whenever you like. The new camera lines up with the take, so every camera layout works on it as if you'd recorded them together. It's a nice way to add a face cam to a tutorial or react to a clip.
+
+You'll find it in the take's inspector, in the **Camera** panel, and in the command palette.
+
+## See yourself while you record
+
+Turn on **Show camera while recording** in the recording bar's options and your camera floats on screen in a small bubble. Drag it anywhere and double-click it to make it bigger. The bubble is left out of the recording, and Slice remembers where you put it.
+
+## Slow motion
+
+Sections can now play at **0.25×** and **0.5×**, next to 2×, 4× and 8×. Slow down a quick click or drag that's worth a closer look. Slowed sections show a tortoise on the timeline and, like sped-up ones, play without sound.
+
+## Fill or Fit
+
+When a recording's shape is far from the video's, like a wide window in a 9:16 video, a new **Fill / Fit** button shows up above the preview. **Fill** crops the recording and follows your pointer, as before. **Fit** shows the whole recording with your background around it, and zooms start from there.
+
+## Faster exports
+
+Long recordings with lots of typing export much faster, and checking the camera for glitches before export now uses far less memory.
+
+## Install or update
+
+Run this in Terminal:
+
+```bash
+curl -fsSL https://slice.rit3zh.dev/install.sh | bash
+```
+
+Or [download Slice.dmg](https://github.com/rit3zh/slice/releases/latest) and drag Slice to Applications. If macOS says it can't verify Slice, click **Done**, then go to **System Settings › Privacy & Security** and click **Open Anyway**. You only need to do this once.
+
+Slice needs macOS 15 or later on Apple silicon.
+
+## What's next
+
+The [roadmap](/roadmap) shows what I'm working on next. If something doesn't work the way you expected, [open an issue](https://github.com/rit3zh/slice/issues/new) and tell me. Every report so far has made Slice better.

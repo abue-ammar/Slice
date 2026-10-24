@@ -29,14 +29,14 @@ export default function ReleaseChip() {
 	return (
 		<Beam>
 			<Link
-				href="/blog/slice-0-2-4"
+				href="/blog/slice-0-2-5"
 				className="group/chip inline-flex h-9 items-center gap-1.5 rounded-full bg-raised px-4 text-[13.5px] font-medium text-fg inset-ring inset-ring-line transition-colors duration-200 ease-quart hover:bg-surface"
 			>
 				<span className="text-muted">v{site.version}</span>
 				<span className="text-faint" aria-hidden>
 					·
 				</span>
-				Introducing 3D MacBook
+				Record your camera over any video
 				<svg
 					width="10"
 					height="10"
