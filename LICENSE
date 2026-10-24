@@ -87,7 +87,7 @@ Some parts of the Software were made by others and are under their own licenses.
 - FluidAudio: Runs Parakeet transcription on the Neural Engine. Apache License 2.0. https://github.com/FluidInference/FluidAudio
 - SmoothGradient: Smooth gradient interpolation, by Ramon Torres. MIT License. https://github.com/raymondjavaxx/SmoothGradient
 - BorderBeamKit: The capture bar's animated border, a SwiftUI port of border-beam by Jakub Antalik. Credited to the original author. https://beam.jakubantalik.com
-- 3D iPhone models: The phones in the 3D editor, by the Sketchfab artists named in the credits. CC BY 4.0. https://github.com/rit3zh/slice/blob/main/Sources/SliceCore/Resources/Models/CREDITS.txt
+- 3D device models: The iPhones and MacBook in the 3D editor, by the Sketchfab artists named in the credits. CC BY 4.0. https://github.com/rit3zh/slice/blob/main/Sources/SliceCore/Resources/Models/CREDITS.txt
 - Keyboard sound packs: Cherry MX Blue (Hai Nguyen) and Holy Panda (Thomas Lai) keystroke sounds. MIT License. https://github.com/rit3zh/slice/tree/main/Sources/SliceCore/Resources/Sounds/Keyboards
 - Apex Pro sound pack: Keystroke sounds. GNU GPL 3.0. https://github.com/rit3zh/slice/tree/main/Sources/SliceCore/Resources/Sounds/Keyboards/apex-pro
 - DeepFilterNet3: Voice enhancement. Downloaded on request, not bundled. MIT or Apache License 2.0. https://github.com/Rikorose/DeepFilterNet
