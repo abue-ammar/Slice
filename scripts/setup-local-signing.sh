@@ -51,5 +51,7 @@ DEVELOPMENT_TEAM =
 CODE_SIGN_IDENTITY = $NAME
 // A self-signed identity has no Team ID, so the hardened runtime refuses to load Xcode's separate Debug dylib.
 ENABLE_DEBUG_DYLIB = NO
+// For the same reason it refuses Sparkle.framework unless library validation is off.
+SLICE_ENTITLEMENTS = App/Slice-SelfSigned.entitlements
 EOF
 echo "Wrote ${CONFIG:A}. Build as usual; grant Screen Recording once more and it will stick."

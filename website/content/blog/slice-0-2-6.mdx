@@ -1,0 +1,52 @@
+---
+title: Slice now updates itself
+description: Slice 0.2.6 checks for new versions on its own, downloads them in the background if you like, and installs them when it suits you, never in the middle of a recording.
+date: 2026-10-24T18:00:00Z
+cover: /media/slice-0-2-6.jpg
+---
+
+Slice 0.2.6 is out, and it's the last version you'll have to download by hand. From now on, Slice finds new versions itself and updates in place, with your projects and settings left exactly as they were.
+
+## How it works
+
+A little while after you open Slice, it quietly checks whether there's a newer version. If you're up to date, you won't see a thing. If there is one, a small card appears in the top right corner with the new version number and what's changed. You get three choices:
+
+- **Update Now** downloads it right away, with progress on the card. Keep working while it downloads.
+- **Later** puts the card away. You'll hear about the update again next time you open Slice.
+- **Skip This Version** means you won't be reminded about that version again. When a newer one comes out, you'll hear about that.
+
+Once the update has downloaded, the card changes to **Update ready to install**. Click **Install & Relaunch** and Slice is back in a few seconds on the new version. Or click **Later** and keep going: the update installs the next time you quit Slice.
+
+## It waits for you
+
+Slice never restarts on its own. **Install & Relaunch** waits until you've finished recording or exporting, and the card stays out of the way while you record. If Slice is in the background, the card waits until you come back.
+
+## Your choice
+
+Open **Settings › General** to choose how it works:
+
+- **Automatically check for updates** is on to start with. Turn it off and Slice won't look for new versions unless you ask.
+- **Automatically download updates** gets new versions ready in the background, so the card only shows up once there's nothing left but to install.
+- **Check for Updates** checks right now, and tells you if you're up to date.
+
+## Safe by design
+
+Updates come straight from Slice's [releases on GitHub](https://github.com/rit3zh/slice/releases), and only finished releases, never test builds. Every update is signed, and Slice checks the signature before it installs anything. If a download has been changed in any way, Slice refuses it and keeps the version you have. Behind the scenes it's [Sparkle](https://sparkle-project.org), the updater many Mac apps trust.
+
+If something goes wrong, like a dropped connection or a full disk, the card says what happened and offers **Try Again**. If a check fails in the background, Slice simply tries again later.
+
+## Install or update
+
+This time you'll need to update by hand, since the version you have can't update itself yet. Run this in Terminal:
+
+```bash
+curl -fsSL https://slice.rit3zh.dev/install.sh | bash
+```
+
+Or [download Slice.dmg](https://github.com/rit3zh/slice/releases/latest) and drag Slice to Applications. If macOS says it can't verify Slice, click **Done**, then go to **System Settings › Privacy & Security** and click **Open Anyway**. You only need to do this once.
+
+Slice needs macOS 15 or later on Apple silicon.
+
+## What's next
+
+The [roadmap](/roadmap) shows what I'm working on next. If something doesn't work the way you expected, [open an issue](https://github.com/rit3zh/slice/issues/new) and tell me. Every report so far has made Slice better.

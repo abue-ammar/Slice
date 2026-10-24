@@ -102,6 +102,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DeviceManager.shared.start()
             AnnotationController.shared.install()
         }
+        // Once the bar is on screen, so opening Slice never waits on the network.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            MainActor.assumeIsolated { Updater.shared.start() }
+        }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

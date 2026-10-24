@@ -34,9 +34,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.2.5</string>
+	<string>0.2.6</string>
 	<key>CFBundleVersion</key>
-	<string>7</string>
+	<string>8</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.video</string>
 	<key>NSCameraUsageDescription</key>
@@ -51,6 +51,22 @@
 	<false/>
 	<key>NSSupportsSuddenTermination</key>
 	<false/>
+	<key>SUAllowsAutomaticUpdates</key>
+	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/rit3zh/slice/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>lblJIPOGcD5mILxJrLhI6wOcc5Q8chkhS+VtX0SxW5c=</string>
+	<key>SURequireSignedFeed</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>14400</integer>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>

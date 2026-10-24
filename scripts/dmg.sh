@@ -9,6 +9,8 @@
 # Builds dist/Slice.dmg without an Apple Developer account: signed with the self-signed identity from
 # Config/Signing.local.xcconfig (see setup-local-signing.sh), not notarized. Keep that certificate: releases signed
 # with the same one keep users' Screen Recording, Camera and Microphone permissions across updates.
+# Also writes dist/Slice.zip and dist/appcast.xml for the in-app updater (see appcast.sh); pass the release notes
+# (a Markdown file) to show them in the update card: scripts/dmg.sh notes.md
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -45,3 +47,7 @@ codesign --sign "$IDENTITY" "$DIST/$APP_NAME.dmg"
 (cd "$DIST" && shasum -a 256 "$APP_NAME.dmg" > "$APP_NAME.dmg.sha256")
 echo "Done: $DIST/$APP_NAME.dmg ($VERSION)"
 cat "$DIST/$APP_NAME.dmg.sha256"
+
+echo "Building update…"
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$DIST/$APP_NAME.zip"
+scripts/appcast.sh "${1:-}"

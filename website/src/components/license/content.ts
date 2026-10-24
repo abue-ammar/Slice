@@ -34,6 +34,12 @@ export const COMPONENTS: Component[] = [
 		url: "https://beam.jakubantalik.com",
 	},
 	{
+		name: "Sparkle",
+		use: "In-app updates from Slice's GitHub releases",
+		license: "MIT License",
+		url: "https://github.com/sparkle-project/Sparkle",
+	},
+	{
 		name: "3D device models",
 		use: "The iPhones and MacBook in the 3D editor, by the Sketchfab artists named in the credits",
 		license: "CC BY 4.0",

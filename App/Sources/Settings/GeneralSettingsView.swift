@@ -10,6 +10,8 @@ import SwiftUI
 struct GeneralSettingsView: View {
     var body: some View {
         Form {
+            UpdateSettingsSection()
+
             Section {
                 LabeledContent("Draw on screen") { ShortcutRecorder() }
             } header: {

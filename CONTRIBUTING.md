@@ -39,6 +39,8 @@ scripts/dmg.sh
 
 This writes `dist/Slice.dmg` and its SHA-256. The app isn't notarized, so people opening it must click **Open Anyway** in System Settings › Privacy & Security the first time. Sign every release with the same certificate. If the certificate changes, users have to grant Screen Recording, Camera and Microphone permission again.
 
+A self-signed certificate has no Team ID, so these builds use `App/Slice-SelfSigned.entitlements`, which turns off library validation so the app can load Sparkle. `setup-local-signing.sh` sets this up. If your `Config/Signing.local.xcconfig` is older than that, add `SLICE_ENTITLEMENTS = App/Slice-SelfSigned.entitlements` to it, or the app quits at launch. Developer ID builds keep library validation on.
+
 ### Signing with your own Developer ID
 
 Copy `Config/Signing.local.xcconfig.example` to `Config/Signing.local.xcconfig` and fill in your team and bundle ID prefix. Git ignores that file.
@@ -48,6 +50,30 @@ To build a notarized DMG, also copy `scripts/release.local.env.example` to `scri
 ```sh
 scripts/release.sh
 ```
+
+### Publishing a release
+
+Slice updates itself with [Sparkle](https://sparkle-project.org). It reads `appcast.xml` from the latest GitHub release (`releases/latest/download/appcast.xml`), so drafts and prereleases are never offered. For each release:
+
+1. Bump `CFBundleShortVersionString` and `CFBundleVersion` in `project.yml`. The updater compares `CFBundleVersion`, so it must go up every time.
+2. Write the release notes as Markdown. A short bullet list reads best; the update card shows the first three lines.
+3. Build with the notes: `scripts/dmg.sh notes.md` (or `scripts/release.sh notes.md`). As well as the DMG, this writes `dist/Slice.zip`, the update itself, and `dist/appcast.xml`, the feed. Both are signed.
+4. Publish all four files:
+
+   ```sh
+   gh release create v0.2.6 dist/Slice.dmg dist/Slice.dmg.sha256 dist/Slice.zip dist/appcast.xml \
+     --title "Slice 0.2.6" --notes-file notes.md
+   ```
+
+Every release must include `appcast.xml` and `Slice.zip`. If the latest release is missing them, nobody gets updates until they're added. To change the notes after building, run `scripts/appcast.sh notes.md` and upload the new `appcast.xml` with `gh release upload --clobber`.
+
+The update and the feed are signed with an EdDSA key in your login keychain. Its public half is `SUPublicEDKey` in `project.yml`, and the app installs nothing that isn't signed with it. Sparkle's tools are in `build/dmg/SourcePackages/artifacts/sparkle/Sparkle/bin` after a build:
+
+- Back the key up once with `generate_keys -x slice-update-key.txt` and keep the file safe and out of the repo. If the key is lost, installed copies can't be updated.
+- To release from another Mac, import it there with `generate_keys -f slice-update-key.txt`.
+- The first time a script signs, macOS asks whether `sign_update` may use the key. Choose **Always Allow**.
+
+Copies of Slice from before the updater was added need the next release installed by hand once.
 
 ## Project layout
 
@@ -63,6 +89,7 @@ scripts/release.sh
   - `Resources`: Metal shaders (compiled at runtime), cursor artwork and sounds, and the 3D iPhone and MacBook models (USDZ)
 - `App/Sources`: the SwiftUI app.
   - `App`: app entry, recording session, window morphs
+  - `Updates`: in-app updates from GitHub releases (Sparkle), the update card and its Settings section
   - `Capture`: the capture bar, recorder, area and window pickers
   - `Devices`: connected iPhones: streams, windows, previews
   - `Projects`: the projects grid

@@ -9,6 +9,8 @@
 # Builds a Developer ID signed, notarized, stapled Slice.app and DMG into dist/.
 # Needs SIGN_IDENTITY, TEAM_ID and NOTARY_PROFILE, from the environment or scripts/release.local.env
 # (see release.local.env.example), plus Config/Signing.local.xcconfig for the build itself.
+# Also writes dist/Slice.zip and dist/appcast.xml for the in-app updater (see appcast.sh); pass the release notes
+# (a Markdown file) to show them in the update card: scripts/release.sh notes.md
 set -euo pipefail
 
 notarize() {
@@ -53,6 +55,14 @@ xcodebuild -project Slice.xcodeproj -scheme Slice -configuration Release \
   -derivedDataPath build/release clean build | grep -E "error:|BUILD" || true
 APP="build/release/Build/Products/Release/$APP_NAME.app"
 test -d "$APP"
+# Sparkle ships its helpers signed ad-hoc, which notarization rejects: sign them inside out, then the app again.
+SPARKLE="$APP/Contents/Frameworks/Sparkle.framework"
+codesign -f -s "$IDENTITY" -o runtime --timestamp "$SPARKLE/Versions/B/XPCServices/Installer.xpc"
+codesign -f -s "$IDENTITY" -o runtime --timestamp --preserve-metadata=entitlements "$SPARKLE/Versions/B/XPCServices/Downloader.xpc"
+codesign -f -s "$IDENTITY" -o runtime --timestamp "$SPARKLE/Versions/B/Autoupdate"
+codesign -f -s "$IDENTITY" -o runtime --timestamp "$SPARKLE/Versions/B/Updater.app"
+codesign -f -s "$IDENTITY" -o runtime --timestamp "$SPARKLE"
+codesign -f -s "$IDENTITY" -o runtime --timestamp --preserve-metadata=entitlements,requirements,flags "$APP"
 codesign --verify --deep --strict "$APP"
 
 echo "Notarizing app…"
@@ -74,3 +84,7 @@ xcrun stapler staple "$DIST/Slice.dmg"
 
 spctl -a -vvv -t install "$DIST/Slice.dmg"
 echo "Done: $DIST/Slice.dmg"
+
+echo "Building update…"
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$DIST/$APP_NAME.zip"
+scripts/appcast.sh "${1:-}"
